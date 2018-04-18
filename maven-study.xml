@@ -524,7 +524,139 @@
     4.保存构建结果并存放到指定位置
     5.更新文档日期和用程序的版本号
 
+    <scm>
+        <url></url>
+        <connection></connection>
+        <developerConnection></developerConnection>
+     </scm>
+     <distributionManagement>
+        <repository>
+            <id></id>
+            <name></name>
+            <url></url>
+        </repository>
+     </distributionManagement>
+     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version></version>
+                <configuration>
+                    <useReleaseProfile></useReleaseProfile>
+                    <goals>depoly</goals>
+                    <scmCommentPrefix></scmCommentPrefix>
+                </configuration>
+            </plugin>
+        </plugins>
+     </build>
+     重要元素:
+     SCM            配置SVN的路径，Maven将从该路径跟新代码
+     仓库           成功构建出的文件或者其他结果存放路径
+     插件           maven-release-plugin用以自动化部署的过程
 
+
+     Web项目
+     mvn archetype:generate
+     -DgroupId=com.sun.health
+     -DartifaceId=maven-web-demo1
+     -DarchetypeArtifactId=maven-archetype-webapp
+     -DinteractiveMode=false
+
+     默认目录结构
+     maven-web-demo1
+     src/main/webapp
+     src/main/webapp/WEB-INF
+     src/main/resources
+
+
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~详细~~~~~~~~~~~~~~~~~~~~~~~~
+     Maven依赖管理
+     Maven最核心的就是对依赖jar包的管理
+     Maven要求每一个jar包都必须明确定义自己的坐标，Maven就是通过这个坐标来查找管理这些jar包的。
+     一个jar包的坐标由groupId、artifactId、version这些元素定义
+     groupId:表明其所属组织或公司及其项目，命名规则为组织或公司域名反转加项目名称
+     artifactId：项目的模块名，通常与实际项目名称一致。模块的命名通常为项目名前缀加模块名
+     version：版本号
+     packaging：定义项目的打包方式，可选值有jar、war、pom等，默认为jar
+     可选元素：
+     scope：指定依赖范围
+     exclusions：排除传递性依赖
+
+     Maven有以下几种寄来范围
+     compile 默认值，依赖在编译、测试、运行期间都有效
+     test：测试依赖范围 只对测试的classpath有效，在编译和运行时无法使用
+     provided：已提供的依赖范围，只对编译和测试的classpath有效，运行期间不会使用，例如servlet-api，容器以提供，无需再次重复引入
+     runtime：运行时依赖范围，编译时无效，只在测试和运行时使用这个依赖
+     system：系统依赖范围，和provided范围一致，但是provided是使用容器提供依赖，system是使用系统提供依赖，需要指定依赖文件路径
+
+     传递性依赖，是指依赖包对其他报的依赖，Maven的特色，简化对jar包依赖的管理，有时需要替换某个传递性依赖，需要exclusions排除掉 使用自己要替换的依赖包
+
+     Maven 常用命令：
+     创建maven项目
+     mvn archetype:craete
+     编译源代码
+     mvn compile
+     编译测试代码
+     mvn test-compile
+     运行测试用例
+     mvn test
+     产生site
+     mvn site
+     打包
+     mvn install
+     在本地repository中安装jar包
+     mvn install
+     清除产生的项目
+     mvn clean
+     生成eclipse/idea项目
+     mvn eclipse:eclipse/mvn idea:idea
+     组合使用goal命令：比如只打包不测试
+     mvn -Dtest package
+     发布第三方jar包到本地仓库
+     mvn isntall:install -file -DgroupId=xxx -DartifactId=xxx -Dversion=xxx -Dpackaging=jar -Dfile=d:xxx.jar
+     mvn dependency:(resolve/tree) 打印依赖
+
+     所有用Maven管理的真是的项目都应该是分模块的，每个模块都对应一个pom.xml，通过继承和聚合（也称作多模块）相互关联
+     一个简单的Maven模块结构应该是:
+     app-parent
+     |-pom.xml（pom)
+     |-app-util
+     }      }-pom.xml(jar)
+     }-app-dao
+     }      }-pom.xml(jar)
+     }-app.service
+     }      }-pom.xml(jar)
+     }-app.web
+            }-pom.xml(war)
+     有一个父项目聚合很多子项目，每个项目不管父子，都含有一个pom文件。而且要注意的是，小括号标出每个项目的打包类型，父项目是pom也只能是pom
+     项目的依赖也是传递性的
+     好处：
+     方便重用，只需要依赖响应的模块。而有些模块可以进化为通用的基础工具类库。
+     划分了模块，每个模块的配置都在各自的pom.xml里，不用再在一个混乱的pom中寻找自己的位置
+     父项目
+     <groupId></groupId>
+     <artifactId></artifactId>
+     <version></version>
+     <packaging>pom</packaging>
+     <modules>
+        <module>child-A</module>
+        <module>child-B</module>
+        <module>child-C</module>
+        <module>child-D</module>
+     </modules>
+     packaging必须是pom
+     在build父项目时会根据子模块的相互依赖关系整理一个build顺序然后依次build
+
+     除了聚合还有继承
+     <parent>
+        <groupId></groupId>
+        <artifactId></artifactId>
+        <version></version>
+     </parent>
+     <artifactId></artifactId>
+      子模块会从父模块里继承一切东西，包括依赖和插件
+           
 -->
 
     <modelVersion>4.0.0</modelVersion>
