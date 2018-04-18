@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!--
+    Maven教程
+    Apache Maven是一套软件工程管理和整合工具。基于工程对象模型（POM）的概念，通过一个中央信息管理模块，Maven能够管理项目的构建、报告和文档。
+
+    Maven 概述
+    Maven是项目管理和整合工具，Maven为开发者提供了一套完整的构建生命周期框架。开发团队几乎不用花多少时间就能够自动完成工程的基础构建配置，因为Maven使用了一个标准的目录结构合一个默认的构建生命周期。
+    大部分的功能配置操作都非常简单并且可复用，在创建报告、检查、构建和测试自动配置时，Maven可以让开发者的工作变得更简单。
+    Maven能够帮助爱发者完成：
+    1.构建
+    2.文档生成
+    3.报告
+    4.依赖
+    5.SCMs
+    6.发布
+    7.分发
+    8.邮件列表
+    总结：Maven简化了工程的构建过程，并对其标准化。无缝衔接了编译、发布、文档生成、团队合作和其他任务。Maven提高了重用性，负责了大部分构建相关的任务。
+
+    Maven目标
+    1.一个可复用、可维护、更易于理解的工程综合模型
+    2.与这个模型交互的插件或者工具
+    Maven工程结构合内容被定义在一个xml文件中-pom.xml中，是Project Object Model的简称，此文件是整个Maven系统的基础组件。
+
+    约定优于配置
+    Maven使用约定而不是配置。
+    开发者无需关心每一个配置细节。Maven为工程提供了合理的默认行为。当创建Maven工程时，Maven会创建默认的工程结构。开发者只需要合理的放置文件，而在pom.xml中不在需要定义任何配置。
+
+    举例（假定${basedir}表示工程目录）：
+    source code             ${basedir}/src/main/java
+    resources               ${basedir}/src/main/resources
+    Tests                   ${basedir}/src/test
+    Complied byte code      ${basedir}/target
+    distributable JAR       ${basedir}/target/classes
+    为了构建工程，Maven为开发者提供了选项来配置生命周期目标和工程依赖（依赖Maven的插件扩展功能和默认的约定）。大部分的工程管理和构建相关的任务是由Maven插件完成的。
+    开发人员不需要了解每个插件的工作原理，就能够构建任何给定的Maven工程。
+
+    Maven 环境配置
+    暂略
+
+    Maven POM(Project Object Model)
+    POM代表工程对象模型，是使用Maven工作时的基本组建，是xml文件，被放在工程根目录下，文件命名为pom.xml
+    POM包含了关于工程和各种配置细节的信息，Maven使用这些信息构建工程。
+    POM也包含了目标和插件。当执行一个任务或目标时，Maven会查找当前目录下的POM，从其中读取所需要的配置信息，然后执行目标。能够在POM中设置的配置:
+    1.Project dependencies 依赖
+    2.plugins 插件
+    3.goals 目标
+    4.build profiles
+    5.project version 项目版本
+    6.developers 开发者
+    7.mailing list
+    在创建POM前，首先确定工程组（groupId）、及其名称（artifactId）和版本，在仓库中这些属性是工程唯一标识
+        <groupId></groupId>
+        <artifactId></artifactId>
+        <version></version>
+    需要说明的是每个工程应该只有一个POM文件
+    1.所有POM文件需要project元素和3个必须的字段：groupId、artifactId和version
+    2.在仓库中的工程标识为groupId:artifactId:version
+    3.POM.xml的根元素是project,必须有3个主要子节点
+        a.groupId   工程组标识。在一个组织或者项目中通常是唯一的。例如一个银行组织com.company.bank拥有所有和银行相关的项目。
+        b.artifactId工程的标识。通常是工程的名称，groupId和artifactId一起定义了artifact在仓库中的位置
+        c.version   这是工程的版本号。在artifact的仓库中，用来区别不同的版本
+
+    Super POM
+    所有的POM都继承自一个父POM（无论是否显式定义这个父POM）。父POM也被称为Super POM，包含了一些可以被继承的默认设置。
+    Maven使用effective pom（Super pom和自定义的pom配置）来执行相关的目标，帮助开发者在pom.xml中做尽可能少的配置，当然这些配置可被方便的重写。
+    查看Super POM默认配置的简单方法是执行mvn help:effective-pom
+    可以看到Maven在执行目标时需要用到的默认工程源码目录结构、输出目录、需要的插件、仓库和报表目录。
+
+    Maven 构建生命周期
+    构建生命周期是一组阶段的序列（sequence of phases），每个阶段定义了目标被执行的顺序。这里的阶段是生命周期的一部分。
+    举例，典型的Maven构建声明周期由一下几个阶段组成
+    1.prepare-resources             资源拷贝            本阶段可以自定义需要拷贝的资源
+    2.compile                       编译                本阶段完成源代码编译
+    3.package                       打包                本阶段根据pom.xml中描述的打包配置创建JAR/WAR包
+    4.install                       安装                本阶段在本地/远程仓库中安装工程包
+    当需要在某个阶段之前或之后执行目标时，可以使用pre和post来定义这个目标
+    当Maven开始构建工程，会按照所定义的阶段序列的顺序执行每个阶段注册的目标。Maven有一下三个标准的生命周期
+    1.clean
+    2.default(or build）
+    3.site
+    目标表示一个特定的、对构建和管理工程有帮助的任务。可能绑定0个或多个构建阶段。没有绑定任何构建阶段的目标可以在构建声明周期之外被直接调用执行。
+    执行的顺序依赖于目标和构建阶段被调用的顺序。例如，
+    mvn clean dependency:copy-dependencies package
+    从左到右的顺序执行
+
+    Clean 生命周期
+    当执行mvn post-clean命令时，Maven调用clean生命周期，包含以下阶段：
+    1.pre-clean
+    2.clean
+    3.post-clean
+    Maven的clean目标（clean:clean)绑定到了clean生命周期的clean阶段。clean:clean目标通过删除构建目录删除了构建输出。
+    例子，将maven-antrun-plugin:run目标添加到pre-clean、clean、post-clean阶段中。
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <id>id.pre-clean</id>
+                        <phase>pre-clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>pre-clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.post-clean</id>
+                        <phase>post-clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>post-clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    Default(Or Build)生命周期
+    validate                    检查工程配置是否正确，完成构建过程的所有必要信息是否能够获取到。
+    initialize                  初始化构建状态，例如设置属性
+    generate-sources            生成编译阶段需要包含的任何源码文件
+    process-sources             处理源代码，例如，过滤任何值（filter any value）
+    generate-resources          生成工程包中需要包含的资源文件
+    process-resources           拷贝和处理资源文件到目的目录中，为打包阶段做准备
+    compile                     编译工程源码
+    process-classes             处理编译生成的文件，例如Java Class字节码的加强和优化
+    generate-test-sources       生成编译阶段需要包含的任何测试源代码
+    process-test-sources        处理测试源代码
+    test-compile                编译测试源代码到目的目录
+    process-test-classes        处理测试代码文件编译后的文件
+    test                        使用适当的单元测试框架（例如Junit）运行测试
+    prepare-package             在真正打包之前，为准备打包执行任何必要的操作
+    package                     获取编译后的代码，并按照可发布的格式进行打包，例如JAR、WAR或者EAR文件
+    pre-integration-test        在集成测试执行之前，执行所需的操作。例如，设置所需的环境变量
+    integration-test            处理和部署必须的工程包到集成测试能够运行的环境中
+    post-integration-test       在集成测试执行之后执行必要的操作，比如，清理环境
+    verify                      运行检查操作来验证工程包是有效的，饼满足质量要求
+    install                     安装工程包到本地仓库中，该仓库可以作为本地其他工程的依赖
+    deploy                      拷贝最终的工程包到远程仓库中，以共享给其他开发人员和工程
+    说明
+    当一个阶段通过Maven命令调用时，例如mvn compile，只有该阶段及以前的阶段会被执行(只会执行当前生命周期中的阶段)
+    不同的maven目标将根据打包的类型(JAR/WAR/EAR)，被绑定到不同的Maven生命周期阶段
+
+    Maven 构建配置文件
+    构建配置文件时一组配置的集合，用来设置或者覆盖Maven构建的默认配置。使用构建配置文件，可以为不同的环境定制构建过程，例如生产和开发环境。
+    Profile在pom.xml中使用activeProfiles/profiles元素指定，并且可以用很多方法触发。Profile在构建时修改POM，并且为变量设置不同的目标环境。
+
+    Profile 类型
+    Profile主要有三种类型
+    Per Project         定义在工程POM文件pom.xml中
+    Per User            定义在Maven设置xml中，(%USER_HOME)/.m2/settings.xml
+    Global              定义在Maven全局配置xml文件中$(%M2_HOME%/conf/settings.xml)
+
+    Profile 激活
+    1.显式使用命令控制台输入
+    2.通过maven设置
+    3.基于环境变量（用户/系统变量）
+    4.操作系统配置（例如 Windows family）
+    5.现存/缺失 文件
+    激活示例
+    在resources文件夹中有3个配置文件
+    env.prod.properties             生产环境配置文件
+    env.properties                  默认配置文件
+    env.test.properties             测试配置文件
+    A.显式Profile激活
+    <profiles>
+        <profile>
+            <id>test</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>id.test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo>using env.test.properties</echo>
+                                        <copy file="src/main/resource/env.test.properties" tofile="${project.build.outputDirectory/env.properties}" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    在命令行中使用mvn test -Ptest使用profile test
+
+    B.通过Maven设置激活Profile
+    打开Maven的settings.xml文件，改文件在%USER_HOME%/.m2/settings.xml，USER_HOME表示用户主目录。
+    添加
+    <activeProfiles>
+        <activeProfile>
+            test
+        </activeProfile>
+    </activeProfiles>
+
+    C.通过环境变量激活Profile
+    在<profile></>中添加
+    <profile>
+        <id>test</id>
+        <activation>
+            <property>
+                <name>env</name>
+                <value>test</value>
+            </property>
+        </activation>
+    </profile>
+    当系统属性env被设置为test时将触发test配置
+
+    D.通过操作系统激活Profile
+    <profile>
+        <id>test</id>
+        <activation>
+            <os>
+                <name>Windows XP</name>
+                <family>Windows</family>
+                <arch>x86</arch>
+                <version>5.1.2600</version>
+        </activation>
+    </profile>
+
+    E.通过现存/缺失的文件激活Profile
+    <profile>
+        <id>test</id>
+        <activation>
+            <file>
+                <missing>...</missing>
+            </file>
+        </activation>
+    </profile>
+
+    Maven 仓库
+    在Maven术语中，仓库是一个位置，可以存储所有的工程jar文件、library jar文件、插件或任何其他的工程指定的文件
+    Maven仓库有三种类型
+    本地（local）
+    中央（central）
+    远程（remote）
+    A.本地仓库
+    Maven本地仓库是机器上的一个文件夹，在第一次运行任意maven命令时创建
+    Maven本地仓库保存工程的所有依赖(library、plugin jar等）。会自动下载依赖jar文件
+    Maven本地仓库默认被创建在%USER_HOME%目录下，要修改默认位置，需要修改%M2_HOME%\conf目录下的settings.xml文件
+    B.中央仓库
+    Maven中央仓库是有Maven社区提供的仓库，其中包含大量常用的库。
+    1.有Maven社区管理
+    2.不需要配置
+    3.需要通过网络才能访问
+    C.远程仓库
+    如果Maven在中央仓库找不到依赖的库文件，会停止构建过程并输出错误信息到控制台。Maven提供了远程仓库的概念，是开发人员自定义仓库，包含所需要的代码库或者其他工程中用到的jar文件。
+    在pom.xml中配置
+    <repositories>
+        <repository>
+            <id>company.lib1</id>
+            <url>url_path1</url>
+        </repository>
+        <repository>
+            <id<company.lib2</id>
+            <url>url_path2</url>
+        </repository>
+    </repositories>
+
+    Maven依赖搜索顺序
+    当执行Maven构建命令时，Maven开始按照以下顺序查找依赖的库
+    1.在本地仓库中搜索，如果找不到执行2，如果找到则执行其他操作
+    2.在中央仓库中搜索，如果找不到，并且有一个或多个远程仓库已经设置，则执行4，如果找到则下载以备将来使用
+    3.如果远程仓库没有设置，Maven将简单的停滞处理并抛出错误
+    4.在一个或多个远程仓库中搜索依赖的文件，如果找到则下载到本地仓库以备将来使用，否则Maven将停滞处理并抛出错误
+
+    Maven 插件
+    Maven实际上时一个依赖插件执行的框架，每个任务实际上是有插件完成。通常被用于：
+    1.创建jar文件
+    2.创建war文件
+    3.编译代码文件
+    4.代码单元测试
+    5.创建工程文档
+    6.创建工程报告
+    插件通常提供了一个目标的集合，并且可以使用下面的语法执行
+    mvn [plugin-name]:[goal-name]
+    例如，一个Java工程可以使用maven-compiler-plugin的compile-goal编译
+    mvn compiler:compile
+
+    插件类型
+    Build Plugins               在构建时执行，并在pom.xml的元素中配置
+    Reporting Plugins           在网站生成过程中执行，并在pom.xml的元素中配置
+    常用插件：
+    clean                       构建之后清理目标文件，删除目标目录(一般为target文件夹)
+    compiler                    编译Java源文件
+    surefile                    运行JUnit单元测试，创建测试报告
+    jar                         从当前工程中构建JAR文件
+    war                         从当前工程中构建WAR文件
+    javadoc                     未工程生成Javadoc
+    antrun                      从构建过程的任意一个阶段运行一个ant任务集合
+
+    插件是在pom.xml中使用plugins元素定义的
+    1.每个插件可以有多个目标
+    2.可以定义阶段，插件会使用它的phase元素开始处理
+    3.可以通过绑定到插件的目标的方式来配置要执行的任务
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.1</version>
+            <execution>
+                <phase>test</phase>
+                <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                    <tasks>
+                        <echo>....</echo>
+                    </tasks>
+                </configuration>
+            </execution>
+        </plugin>
+        将echo任务绑定到maven-antrun-plugin插件的run目标上
+    4.Maven下载插件和下载依赖的过程一致
+
+
+    Maven 创建工程
+    Maven使用原型（archetype）插件创建工程。要创建一个简单的Java应用，可使用maven-archetype-quickstart插件。
+    mvn archetype:generate
+        -DgroupId=com.sun.health
+        -DartifactId=java-simple
+        -DarchetypeArtifactId=maven-archetype-quickstart
+        -Dinteracrivemode=false
+    文件结构
+    java-simple             包含src文件夹和pom.xml (创建时的artifactId)
+    |
+    |-src
+    |   |
+    |   |-main              java代码文件在包结构下
+    |   |
+    |   |-test              测试代码在包结构下
+    |   |
+    |   |-resources         包含了图片/属性文件
+    |
+    |-pom.xml
+
+    maven-archetype-quickstart 创建了简单的Java源文件和Java测试文件
+
+
+    Maven 构建 & 测试工程
+    在simple-java目录下
+    执行命令行 mvn clean package即可构建工程并创建最终的jar文件
+    1.mvn clean package为maven制定了2个目标，首先清理目标目录(clean),然后打包工程构建的输出为jar(package)文件。
+    2.打包好的jar文件在target目录下获得
+    3.测试报告存放在target/Surefire-reports文件夹中
+    4.Maven编译源代码文件，以及测试源码文件
+    5.接着Maven运行测试用例
+    6.最后Maven创建工程
+
+    Maven 外部依赖
+    Maven依赖管理使用的是Maven-仓库的概念。如果在中央仓库和远程仓库中，依赖不能被满足，就需要使用外部依赖来解决这个问题。
+    1.在src目录下创建lib文件夹
+    2.复制任意jar包至lib文件夹
+    在pom.xml中添加
+    <dependencies>
+        <dependency>
+            <groupId>JetbrainsCrack-2.7-release-str</groupId>
+            <artifactId>JetbrainsCrack-2.7-release-str</artifactId>
+            <version>2.7</version>
+            <scope>system</scope>
+            <systemPath>${basedir}\src\lib\JetbrainsCrack-2.7-release-str.jar</systemPath>
+        </dependency>
+    </dependencies>
+    外部依赖
+    1.外部依赖（library jar location）能够像其他依赖一样在pom.xml中配置
+    2.指定groupId为library的名称
+    3.指定artifactId为library的名称
+    4.指定作用域（scope）为系统
+    5.指定相对于工程位置的系统路径 ${basedir}
+
+    Maven 工程文档
+    创建文档
+    mvn site
+    即在target\site目录下创建文档
+
+    Maven 工程模板
+    Maven使用原型（Archetype）概念为用户提供了大量不同类型的工程模板.Maven使用下面的命令帮助用户快速创建java项目。
+    mvn archetype:generate
+
+    原型：
+    是Maven的一个插件，它的任务是根据模板创建一个项目结构。
+    mvn archetype:generate
+    执行插件目标
+    按照提示输入（或者默认）选项即可按照模板创建项目
+
+    Maven 快照
+    大型软件应用程序通常由多个模块组成，这是多个团队工作与同一个应用程序的不同模块的常见场景。例如一个团队工作负责应用程序的前段应用用户接口工程（app-ui.jar:1.0),同时使用数据服务工程(date-service.jar:1.0)
+    现在负责数据服务的团队可能正在进行修改BUG或者增强功能，并快速迭代，几乎每天都会release工程库文件到远程仓库。
+    如果每天上传新版本，会产生问题：
+    1.每次数据服务团队发布一版更新的代码都需要告诉应用接口团队
+    2.应用接口团队需要定期更新pom.xml来得到更新的版本
+
+    快照：
+    快照是一个特殊的版本，表示当前开发的一个副本。与常规版本不同，Maven为每一次构建从远程仓库中检出一份新的库按照版本。
+    现在数据服务团队会将每次更新的代码快照发布到仓库，替换旧的快照文件
+
+    快照 VS 版本
+    对于版本，Maven一旦下载了指定的版本，将不会尝试从仓库中再次下载一个新的1.0版本。想要下载新版本，必须更新version
+    对于快照，每次用户接口团队构建项目时，Maven将自动获取最新的快照
+
+    快照版pom.xml
+    <dependency>
+        <groupId>xxx</groupId>
+        <artifactId>xxx</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    快照每次自动下载，也可以在任意maven命令中使用-U参数强制maven下载最新的快照
+    mvn clean package -U
+
+    构建自动化
+    构建自动化定义为一种场景：一旦某项工程构建完成，其相关的依赖工程即开始构建，目的是为了保证其依赖项目的稳定。
+    实例
+    一个关于总线核心API（bus-core-api)的工程，依赖的工程有2个，分别为网页UI(app-web-ui)和应用程序桌面UI（app-desktop-ui）
+    app-web-ui中
+    <dependency>
+        <groupId>bus-core-api</groupId>
+        <artifactId>bus-core-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    app-desktop-ui也使用
+    <dependency>
+        <groupId>bus-core-api</groupId>
+        <artifactId>bus-core-api</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    bus-core-ui中
+    <groupId>bus-core-api</groupId>
+    <artifactId>bus-core-api</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    有两种构建自动化方式
+    1.在bus-core-api的pom文件里添加一个编译目标来提醒app-web-ui和app-desktop-ui来启动创建
+    2.使用一个持续集成（CI）的服务器，比如Hudson，来实现自动化创建
+
+    Maven编译目标方式
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-invoker-plugin</artifactId>
+                <version>1.6</version>
+                <configuration>
+                    <debug>true</debug>
+                    <pomIncludes>
+                        <pomInclude>app-web-ui/pom.xml</pomInclude>
+                        <pomInclude>app-desktop-ui/pom.xml</pomInclude>
+                    </pomIncludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    <execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    Maven 以来管理
+    Maven核心特点之一是依赖管理，一旦开始处理多模块工程（包含子模块或子工程）的时候，模块间的依赖关系就变得非常复杂
+    传递依赖发现
+    常见，当A依赖于B，C想要使用A，那么该工程也同时依赖B
+    Maven可以避免去搜索所有需要的库资源。通过读取工程文件（pom.xml）中的依赖项，Maven可以找出工程之间的依赖关系。
+    用户只需要在工程中pom.xml文件定义直接的依赖关系。Maven则会自动的来接管后续的工作。
+    Maven提供了一些功能来控制可传递的依赖程度
+    依赖调节            决定当多个手动创建的班额本同时出现时，哪个依赖版本将会被使用
+    依赖管理            直接的指定手动创建的某个版本被使用
+    依赖范围            包含在构建过程每个阶段的依赖
+    依赖排除            任何可传递的依赖都可以通过exclusion元素被排除在外
+    依赖可选            任何可传递的依赖可以通过optional元素标记为可选的
+
+    依赖范围
+    编译阶段
+    供应阶段
+    运行阶段
+    测试阶段
+    系统阶段
+    导入阶段
+
+    Maven 自动化部署
+    一次部署一般包含如下步骤
+    1.合并代码到版本库
+    2.下载完整原地阿妈
+    3.构建应用程序
+    4.保存构建结果并存放到指定位置
+    5.更新文档日期和用程序的版本号
+
+
+-->
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sun.health.flowable</groupId>
+    <artifactId>flowable</artifactId>
+    <version>1.0.0</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>JetbrainsCrack-2.7-release-str</groupId>
+            <artifactId>JetbrainsCrack-2.7-release-str</artifactId>
+            <version>2.7</version>
+            <scope>system</scope>
+            <systemPath>${basedir}\src\lib\JetbrainsCrack-2.7-release-str.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>test</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven.antrun.plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>id.test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo>Using env.test.properties</echo>
+                                        <copy file="src/main/resources/env.test.properties" tofile="${project.build.outputDirectory}/env.properties" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>normal</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>id.test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo>using env.properties</echo>
+                                        <copy file="src/main/resources/env.properties" tofile="${project.build.outputDirectory}/env.properties" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>id.test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo>using env.prod.properties</echo>
+                                        <copy file="src/main/resources/env.prod.properties" tofile="${project.build.outputDirectory}/env.properties" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <id>id.pre-clean</id>
+                        <phase>pre-clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>pre-clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>Clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.post-clean</id>
+                        <phase>post-clean</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>post-clean phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>validate phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>compile phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>test phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.package</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>package phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>deploy phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.pre-site</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>pre-site phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.site</id>
+                        <phase>site</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>site phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.post-site</id>
+                        <phase>post-site</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>post-site phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>id.deploy-site</id>
+                        <phase>deploy-site</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <echo>deploy-site phase</echo>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
