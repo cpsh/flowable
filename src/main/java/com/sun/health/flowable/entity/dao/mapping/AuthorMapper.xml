@@ -121,6 +121,33 @@
         columnPrefix	当连接多表时，你将不得不使用列别名来避免ResultSet中的重复列名。指定columnPrefix允许你映射列名到一个外部的结果集中。 请看后面的例子。
         notNullColumn	默认情况下，子对象仅在至少一个列映射到其属性非空时才创建。 通过对这个属性指定非空的列将改变默认行为，这样做之后Mybatis将仅在这些列非空时才创建一个子对象。 可以指定多个列名，使用逗号分隔。默认值：未设置(unset)。
         autoMapping 	如果使用了，当映射结果到当前属性时，Mybatis将启用或者禁用自动映射。 该属性覆盖全局的自动映射行为。 注意它对外部结果集无影响，所以在select or resultMap属性中这个是毫无意义的。 默认值：未设置(unset)。
+
+
+        集合
+        集合元素的作用集合和关联是相同的，将javaType变为ofType基本相同
+
+        鉴别器 discriminator
+        单独的数据库查询也许返回很多不同（但有些关联）数据类型的结果集。鉴别其元素就是被设计来处理这种情况的，还有包括类的继承层次结构。类似于Java中的switch语句
+
+        定义鉴别器指定了column和javaType属性。列是MyBatis查找比较值的地方，javaType是需要被用来保证等价测试的合适类型（通常字符串）
+        例如
+        <discrimination column="id" javaType="int">
+            <case value="1" resultMap="A" />
+            <case value="2" resultMap="B" />
+            <case value="3" resultMap="C" />
+        </discrimination>
+
+        自动映射
+        在简单场景下，MyBatis可以自动映射查询结果。复杂场景则需要构建ResultMap，也可以混用两种策略。
+        当自动映射查询结果时，MyBatis会获取sql返回的列名并在Java类中查找相同名字的属性（忽略大小写）。这意味这如果MyBatis发现了ID列和id属性，将会赋值
+        通常数据库列使用大写单词命名，单词间用下划线分割，而java一般遵循驼峰命名法。为了在两种命名方式之间启动自动映射，需要将mapUnderscoreToCamelCase设置为true
+        自动映射甚至在特定的resultMap下也能工作，如果没有被手工映射，则将被自动映射。自动映射完毕后手动映射才会被处理。
+        有三种自动映射等级：
+        1.NONE 禁用自动映射。仅设置手动映射属性
+        2.PARTIAL 将自动映射结果除了那些有内部定义内嵌结果映射的（joins） 默认
+        3.FULL 自动映射所有
+
+        autoMapping属性可以忽略自动映射等级配置
     -->
     <resultMap id="userResultMap" type="User">
         <id property="id" column="user_id"></id>
@@ -156,6 +183,32 @@
             </discriminator>
         </collection>
     </resultMap>
+
+
+    <resultMap id="" >
+        <constructor>
+            <idArg column="" javaType="" name="" />
+            <arg column="" javaType="" name="" />
+         </constructor>
+        <id column="" property="" />
+        <result column="" property="" />
+        <association property="" column="" javaType="" select="">
+        </association>
+        <association property="" column="" resultMap=""></association>
+        <association property="" column="" resultMap="" columnPrefix=""></association>
+        <association property="" column="" type="">
+            <id></id>
+            ,<result></result>
+        </association>
+    </resultMap>
+
+    <select id="" >
+
+    </select>
+
+    <select id="" >
+
+    </select>
 
     <!--
         可以被用来定义可重用的SQL代码段，可以包含在其他语句中，它可以被静态参数化，不同属性通过包含的实例变化
