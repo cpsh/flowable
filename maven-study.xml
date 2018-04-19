@@ -657,10 +657,9 @@
      <artifactId></artifactId>
       子模块会从父模块里继承一切东西，包括依赖和插件
 
-
       ~~~~~~~~~~~~~~~~~~~~Maven文件标签详解~~~~~~~~~~~~~~~~~~~~~~
       
-           
+
 -->
 
     <modelVersion>4.0.0</modelVersion>
