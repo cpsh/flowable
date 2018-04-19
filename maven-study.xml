@@ -622,13 +622,13 @@
      app-parent
      |-pom.xml（pom)
      |-app-util
-     }      }-pom.xml(jar)
-     }-app-dao
-     }      }-pom.xml(jar)
-     }-app.service
-     }      }-pom.xml(jar)
-     }-app.web
-            }-pom.xml(war)
+     |      |-pom.xml(jar)
+     |-app-dao
+     |      |-pom.xml(jar)
+     |-app.service
+     |      |-pom.xml(jar)
+     |-app.web
+            |-pom.xml(war)
      有一个父项目聚合很多子项目，每个项目不管父子，都含有一个pom文件。而且要注意的是，小括号标出每个项目的打包类型，父项目是pom也只能是pom
      项目的依赖也是传递性的
      好处：
@@ -656,6 +656,10 @@
      </parent>
      <artifactId></artifactId>
       子模块会从父模块里继承一切东西，包括依赖和插件
+
+
+      ~~~~~~~~~~~~~~~~~~~~Maven文件标签详解~~~~~~~~~~~~~~~~~~~~~~
+      
            
 -->
 
