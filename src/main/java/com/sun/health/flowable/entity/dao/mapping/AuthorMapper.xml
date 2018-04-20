@@ -323,7 +323,119 @@
 
     </delete>
 
+    <!--
+        动态SQL
+        动态SQL元素和JSTL或基于类似XML的文本处理器相似。MyBatis采用功能强大的基于OGNL的表达式。
+        1.if
+        2.choose(when,otherwise)
+        3.trim(where,set)
+        4.foreach
+
+    -->
+
+    <!--
+        if
+        格式<if test="条件判断"> and|or
+                SQL
+            </if>
+    -->
+    <select id="findActiveBlogWithTitleLike" resultType="Blog">
+        SELECT * FROM blog
+          WHERE state = 'active'
+          <if test="title != null">
+              AND title LIKE #{title}
+          </if>
+          <if test="author != null and author.name != null">
+              AND author_name like #{author.name}
+          </if>
+    </select>
+    <!--
+        choose,when,otherwise
+        不想应用所有的条件语句，只想从中选择一项。类似于Java中的switch
+
+    -->
+    <select id="findActiveBlogLike" resultType="Blog">
+        SELECT * FROM blog
+          WHERE state = 'active'
+          <choose>
+              <when test="title != null">
+                  AND title LIKE #{title}
+              </when>
+              <when test="author != null and author.name != null">
+                  AND author_name LIKE #{author.name}
+              </when>
+              <otherwise>
+                  AND featured = 1
+              </otherwise>
+          </choose>
+    </select>
+
+    <!--
+        单纯使用以上的动态语言 可能会导致语句缺少或多余
+        例子：
+        <select id="s1" resultType="hashmap">
+            SELECT * FROM blog WHERE
+            <if test="state != null">
+                state = #{state}
+            </if>
+            <if test="title != null">
+                AND title=#{title}
+            </if>
+        </select>
+        如果state缺少 可能会出现SELECT * FROM blog WHERE/SELECT * FROM blog WHERE AND title='ABC'的情况，此时执行SQL将抛出错误
+        1.trim 若where元素没有正常工作，可以通过自定义的trim元素来定制where元素的功能 例如where等价trim <trim prefix="WHERE" prefixOverrides="AND |OR "> prefixOverrides用处是删除对应文本在用prefix中的文本替换
+        2.where 若条件判读之后没有条件则去除where 若条件以and、or开头则删除
+        3.set 用于需要动态包含更新的列，而舍去其他的。
+        本质上都是trim where和set只是简化版本
+        <where> = <trim prefix="WHERE" prefixOverrides="AND |OR ">
+        <set> = <trim prefix="SET" suffixOverrides=",">
+
+    -->
+    <select id="useWhere" resultType="hashmap">
+        SELECT * FROM blog
+          <where>
+              <if test="state != null">
+                  state = #{state}
+              </if>
+              <if test="title != null">
+                  AND title=#{title}
+              </if>
+          </where>
+    </select>
+
+    <update id="useSet">
+        UPDATE blog
+          <set>
+              <if test="username != null">username=#{username},</if>
+              <if test="password != null">password=#{password},</if>
+              <if test="email != null">email=#{email},</if>
+              <if test="bio != null">bio=#{bio}</if>
+          </set>
+    </update>
+
+    <!--
+        foreach
+        对集合进行遍历，通常在构建IN条件语句中
+        格式
+        <foreach item="" index="" collection="" open="" separator="" close="">
+        </foreach>
+        功能十分强大
+        index 下标 (Map为key)
+        item 每个遍历得到的对象 (Map为value)
+        collection 容器
+        open 在开头添加
+        close 在结尾添加
+        separator 分隔符
+        可以将任何可迭代对象，Map，数组传入collection
+
+    -->
 
 
+    <!--
+        bind
+        bind元素可以从OGNL表达式中创建一个变量并绑定到上下文
+        格式
+        <bind name="" value="" />
+    -->
 
 </mapper>
