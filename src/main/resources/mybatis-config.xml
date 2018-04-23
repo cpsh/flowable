@@ -295,8 +295,8 @@
         5.defaultTransactionIsolationLevel 默认的连接事务隔离级别
         POOLED 利用连接池，避免创建新的连接实例所需的初始化和认证时间
         除了UNPOOLED属性
-        1.poolMaximumActiveConnection 最大活动连接数 默认10
-        2.poolMaximumIdleConnection 最大空闲连接数
+        1.poolMaximumActiveConnections 最大活动连接数 默认10
+        2.poolMaximumIdleConnections 最大空闲连接数
         3.poolMaximumCheckoutTime 在被强制返回之前，池中连接被检出时间 默认20000毫秒
         4.poolTImeToWait 获取连接花费较长时间，会打印日志并重新尝试获取连接 默认20000毫秒
         5.poolMaximumLocalBadConnectionTolerance 坏连接数 默认3
