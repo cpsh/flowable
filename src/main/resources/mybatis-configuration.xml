@@ -7,6 +7,10 @@
 
     </properties>
 
+    <typeAliases>
+        <package name="com.sun.health.flowable.mybatis" />
+    </typeAliases>
+
     <environments default="default">
         <environment id="default">
             <transactionManager type="JDBC"></transactionManager>
@@ -19,4 +23,8 @@
             </dataSource>
         </environment>
     </environments>
+
+    <mappers>
+        <mapper resource="com\sun\health\flowable\mybatis\user-mapper.xml" />
+    </mappers>
 </configuration>
