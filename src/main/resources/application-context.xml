@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
+       default-init-method="init"
+       default-destroy-method="destroy"
+>
+
+    <!--
+        Spring体系结构
+        1.核心容器
+            A.Core 模块提供了框架的基本组成部分，包括IoC和依赖注入功能。
+            B.Bean 模块提供BeanFactory，是一个工厂模式的复杂实现
+            C.Context 模块建立在由Core和Bean模块提供的坚实基础上，是访问定义和配置的任何对象的媒介。ApplicationContext接口是Context模块的重点。
+            D.SpEL 模块在运行时提供了查询和操作一个对象图的强大的表达式语言。
+        2.数据访问/集成
+            A.JDBC 模块提供了删除冗余的JDBC相关编码的JDBC抽象层。
+            B.ORM 模块为流行的对象关系映射API，包括JPA、JDO、Hibernate和Mybatis，提供了集成层。
+            C.OXM 模块提供了抽象层，支持对JAXB、Castor、XMLBeans、JiBX和XStream的对象/XML映射实现。
+            D.Java消息服务JMS 模块包含生产和消费的信息的功能。
+            E.Transaction 模块为实现特殊接口的类及所有POJO支持编程式和声明式事务管理。
+        3.Web
+            A.Web 模块提供了基本的面向Web的继承功能，例如多个文件上传的功能和使用Servlet监听器和面向Web应用程序的上下文来初始化IoC容器。
+            B.Web-MVC 模块包含Spring的模型-视图-控制器（MVC），实现web应用程序。
+            C.Web-Socket 模块为WebSocket-based提供了支持，而且在web应用程序中提供了客户端和服务端之间通信的两种方式。
+            D.Web-Portlet 模块提供了在portlet环境中实现MVC，并且反映了Web-Servlet模块的功能。
+        4.其他
+            A.AOP 模块提供了面向切面的编程实现，允许定义方法拦截器和切入点对代码进行干净地解耦。
+            B.Aspects 模块了AspectJ的集成，功能强大且成熟的面向切面编程（AOP）框架
+            C.Instrumentation 模块在一些应用服务器中提供了类instrumentation的支持和类加载器的实现、
+            D.Messaging 模块为STOMP提供了支持，作为在应用程序中WebSocket子协议的使用，支持一个注解编程模型。
+            E.Test 测试模块支持对具有JUnit或TestNG框架的Spring组件的测试
+
+
+        简单示例：HelloWorld和MainApp两个类和此配置文件
+        1.使用ApplicationContext创建应用程序的上下文，这个API加载Beans的配置文件并最终基于所提供，处理创建并初始化所有对象，即在配置文件中提到的Beans
+        2.使用已创建的上下文的getBeans()方法来获得所需的bean。这个方法使用Bean的ID返回一个最终可以转换为实际对象的通用对象。
+
+
+        Spring IoC容器
+        Spring容器和Spring框架的核心。容器将创建对象，并连接在一起，配置，管理生命周期，从创建到销毁。Spring容器使用以来注入（DI）来管理组成一个应用程序的组件，称为Spring Beans。
+        通过配置元数据提供的指令，容器知道哪些对象需要实例化，配置和组装。配置元数据可以通过XML、Java注释或Java代码表示。
+
+        Spring提供了两种不同类型的容器
+        1.Spring BeanFactory容器
+            最简单的容器，给DI提供了基本支持，由BeanFactory接口定义
+        2.Spring ApplicationContext
+            添加更多功能，例如从属性文件中解析文本信息的能力。由ApplicationContext接口定义
+
+        Spring BeanFactory容器
+        BeanFactory和相关的接口，比如BeanFactoryAware、DisposableBean、InitializingBean，仍然保留在Spring中，目的是向后兼容已经存在的和Spring整合的第三方框架。
+        Spring中，有大量对BeanFactory接口的实现，最常使用的XMLBeanFactory。这个容器从一个XML文件中读取配置元数据，然后生成一个配置化的系统或者应用。
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource("application-context.xml"))
+
+        Spring ApplicationContext容器
+        包含BeanFactory所有功能，并在此基础上添加额外的功能。
+        最常使用的ApplicationContext实现：
+        1.ClassPathXmlApplicationContext
+        2.FileSystemXmlApplicationContext
+        3.WebXmlApplicationContext
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("application-context.xml")
+
+        Spring Bean定义
+        Bean是一个被实例化、组装并通过SpringIoC容器所管理的对象。
+        <bean ></bean>标签中的属性
+        属性                              描述
+        class                           必填，指定创建Bean的类
+        name/id                         指定唯一标识符，基于XML的配置元数据中，可以使用ID和/或name属性来指定bean标识符
+        scope                           特定作用域
+        constructor-arg                 用于注入依赖关系
+        properties                      用于注入依赖关系
+        autowiring mode                 用于注入依赖关系
+        lazy-initialization mode        延迟初始化Bean，容器在第一次被请求使用的时候创建而不是在初始化容器的时候
+        initialization                  在bean的所有必需的属性被容器设置之后，调用回调方法
+        destruction                     包含此bean的容器被销毁的时候，调用毁掉函数
+        Spring配置元数据
+        1.基于XML配置文件
+        2.基于注解
+        3.基于Java类
+
+        Spring Bean作用域
+        作用域                     描述
+        Singleton               限制在每一个Spring IoC容器中单一实例（默认选项）
+        prototype               任意数量实例，每次请求创建一个
+        request                 限制在Http请求中，只在web-aware Spring ApplicationContext的上下文中生效
+        session                 限制在Http会话中，只在web-aware Spring ApplicationContext的上下文中生效
+        global-session          限制在全局Http会话中
+
+        singleton作用域
+        如果为singleton作用域，那么SpringIoC容器只创建一个由该Bean定义的对象的实例。存储在高速缓存中，每次请求都返回此缓存对象。
+        prototype作用域
+        如果为prototype作用域，那么SpringIoC容器在每次请求时创建一个新的对象实例。
+
+
+        Bean生命周期
+        当一个Bean实例化时，可能需要执行一些初始化工作，当从容器中移除时，可能需要一些清除工作。
+        1.@PostConstruct @PreDestroy (注解默认不识别 需要配置<context:annotation-config /> 或CommonAnnotationBeanPostProcessor的Bean)
+        2.实现InitializingBean和DisposableBean接口
+        3.在Bean配置元数据中配置init-method和destroy-method
+        顺序按照从上向下
+
+
+
+        默认初始化和销毁方法
+        在beans标签中添加default-init-method和default-destroy-method属性
+
+        Spring Bean后置处理器 BeanPostProcessor
+        BeanPostProcessor接口定义回调方法，可以实现该方法来提供自己的实例化逻辑，依赖解析逻辑等。可以配置多个BeanPostProcessor接口，通过设置BeanPostProcessor继承的Ordered接口提供的order属性来控制执行顺序。
+        BeanPostProcessor可以对Bean实例进行操作，意味着SpringIoC容器实例化一个bean实例后BeanPostProcessor产生工作。
+        ApplicationContext会自动检测由BeanPostProcessor接口实现定义的Bean，自动注册这些Bean为后置处理器。
+        public class TestBeanPostProcessor import BeanPostProcessor, Ordered {
+            public int getOrder() {
+                return 0; // 顺序
+            }
+            public Object postProcessBeforeInitialization(Object bean, String bean_id) throws BeanException {
+                // 在调用构造函数之前 对Bean进行一些处理
+                return bean;
+            }
+            public Object postProcessAfterInitialization(Object bean, String bean_id) throws BeanException {
+                // 在调用构造函数之后 且在@PostConstruct InitializingBean init-method之后 对Bean进行一些处理
+                return bean;
+            }
+        }
+
+        Spring Bean定义继承
+        Bean定义可以包含很多配置信息，包括构造函数的参数，属性值，容器的具体信息例如初始化方法，静态工厂方法名等。
+        子Bean的定义可以继承父Bean的配置数据，还可以根据需要重写一些值，或者添加其他值。
+        <bean abstract="true">
+        <bean parent="parent_bean_id">
+        仅仅继承配置信息，且父Bean的配置元数据不能比子Bean多
+
+    -->
+
+    <bean id="helloWorld" class="com.sun.health.flowable.spring.HelloWorld" scope="singleton" init-method="init_method" destroy-method="destroy_method">
+        <property name="message" value="你好！" />
+    </bean>
+
+    <!--<bean class="com.sun.health.flowable.spring.ABeanPostProcessor" />
+    <bean class="com.sun.health.flowable.spring.BBeanPostProcessor" />
+
+    <bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor" />-->
+
+    <!--<context:annotation-config />-->
+
+    <bean id="abstractParent" abstract="true">
+        <property name="messageA" value="Abstract A" />
+        <property name="messageB" value="Abstract B" />
+        <property name="messageC" value="Abstract C" />
+        <!--<property name="messageD" value="Abstract D" />-->
+    </bean>
+
+    <bean id="helloParent" class="com.sun.health.flowable.spring.HelloParent">
+        <property name="messageA" value="Parent A" />
+        <property name="messageB" value="Parent B" />
+        <!--<property name="messageD" value="Parent D" />-->
+    </bean>
+
+    <bean id="helloChild" class="com.sun.health.flowable.spring.HelloChild" parent="helloParent">
+        <property name="messageA" value="Child A" />
+        <property name="messageC" value="Child C" />
+    </bean>
+
+</beans>
