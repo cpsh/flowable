@@ -27,10 +27,36 @@ public class MainApp {
 
 //        applicationContext.registerShutdownHook();
 
-        HelloChild helloChild = (HelloChild) applicationContext.getBean("helloChild");
-        System.out.println(helloChild.getMessageA());
-        System.out.println(helloChild.getMessageB());
-        System.out.println(helloChild.getMessageC());
+//        HelloChild helloChild = (HelloChild) applicationContext.getBean("helloChild");
+//        System.out.println(helloChild.getMessageA());
+//        System.out.println(helloChild.getMessageB());
+//        System.out.println(helloChild.getMessageC());
+
+//        DIConstructorObj obj = (DIConstructorObj) applicationContext.getBean("obj");
+//        obj.getArgA().funA();
+//        obj.getArgA().speak();
+//        obj.getArgB().funcB();
+//        obj.getArgB().speak();
+//
+//        DIConstructorObj obj2 = (DIConstructorObj) applicationContext.getBean("obj2");
+//        System.out.println(obj2.getNum());
+//        System.out.println(obj2.getStr());
+//
+//        DIConstructorObj obj3 = (DIConstructorObj) applicationContext.getBean("obj3");
+//        System.out.println(obj3.getNum());
+//        System.out.println(obj3.getStr());
+//
+//        DIConstructorObj obj4 = (DIConstructorObj) applicationContext.getBean("obj4");
+//        obj4.getArgA().funA();
+//        obj4.getArgA().speak();
+//        obj4.getArgB().funcB();
+//        obj4.getArgB().speak();
+
+        JavaCollection javaCollection = (JavaCollection) applicationContext.getBean("javaCollection");
+        System.out.println(javaCollection.getAddressList());
+        System.out.println(javaCollection.getAddressSet());
+        System.out.println(javaCollection.getAddressMap());
+        System.out.println(javaCollection.getAddressProps());
 
     }
 

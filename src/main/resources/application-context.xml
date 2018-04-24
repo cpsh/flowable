@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
        default-init-method="init"
@@ -130,6 +131,68 @@
         <bean parent="parent_bean_id">
         仅仅继承配置信息，且父Bean的配置元数据不能比子Bean多
 
+
+        Spring 依赖注入
+        无需关注依赖对象的具体实现而由SpringIoC容器统一管理，在实例化时注入。
+        1.Constructor-based dependency injection
+        基于构造函数的依赖注入
+        2.Setter-based dependency injection
+        基于setter方法的依赖注入 调用默认构造函数或静态工厂方法实例化bean调用bean的setter方法
+        3.混用以上两种方法
+
+        Spring基于构造函数的依赖注入
+        <bean id="bean_id" class="class_path">
+            <constructor-arg value="" ref="" type="" index="" />
+        </bean>
+        1.constructor-arg 需要按照构造函数参数顺序
+        2.使用type显示指定构造函数参数的类型
+        3.使用index显示指定构造函数参数的索引（最好）
+
+        基于setter函数的依赖注入
+        <bean id="" class="">
+            <property name="" ref="" value="" />
+        </bean>
+        或者
+        <bean id="" class=""
+            p:name=""
+            p:job-ref=""
+        >
+        </bean>
+        可以使用p:property_name指定setter的value 或者 p:property_name-ref="" 指定对应bean的ref
+
+        Spring 注入内部Beans
+        inner bean是在其他bean的范围内定义的bean，被称为内部bean
+        <bean id="" class="">
+            <constructor-arg>
+                <bean class=""></bean>
+            </constructor-arg>
+            <property name="">
+                <bean class=""></bean>
+            </property>
+        </bean>
+
+        Spring 注入集合
+        value 传入一个基本类型和String
+        ref 传入一个bean
+        如果想传递其他类型，例如容器类型List、Set、Map、Properties
+        需要使用
+        <list>
+            <value>值</value>
+            <ref bean="" />
+        </list>
+        <set>
+            <value>值</value>
+            <ref bean="" />
+        </set>
+        <map>
+            <entry key="" key-ref="" value="" value-ref="" />
+        </map>
+        <props>
+            <prop key="">值</prop>
+        </props>
+        需要注入空值null和空字符串的
+        1.value=""即为空字符串
+        2.<null/>作为null值
     -->
 
     <bean id="helloWorld" class="com.sun.health.flowable.spring.HelloWorld" scope="singleton" init-method="init_method" destroy-method="destroy_method">
@@ -159,6 +222,73 @@
     <bean id="helloChild" class="com.sun.health.flowable.spring.HelloChild" parent="helloParent">
         <property name="messageA" value="Child A" />
         <property name="messageC" value="Child C" />
+    </bean>
+
+    <bean id="argA" class="com.sun.health.flowable.spring.DIConstructorArgA"></bean>
+
+    <bean id="argB" class="com.sun.health.flowable.spring.DIConstructorArgB"></bean>
+
+    <bean id="obj" class="com.sun.health.flowable.spring.DIConstructorObj">
+        <constructor-arg ref="argA" />
+        <constructor-arg ref="argB" />
+    </bean>
+
+    <bean id="obj2" class="com.sun.health.flowable.spring.DIConstructorObj">
+        <constructor-arg index="1" ref="argB" />
+        <constructor-arg index="0" value="你好" />
+        <property name="argA" ref="argA" />
+        <property name="num" value="10" />
+    </bean>
+
+    <bean id="obj3" class="com.sun.health.flowable.spring.DIConstructorObj"
+        p:argB-ref="argB" p:str="不好"
+    >
+        <constructor-arg type="int" value="20" />
+        <constructor-arg type="com.sun.health.flowable.spring.DIConstructorArgA" ref="argA" />
+    </bean>
+
+    <bean id="obj4" class="com.sun.health.flowable.spring.DIConstructorObj">
+        <constructor-arg>
+            <bean id="argAInner" class="com.sun.health.flowable.spring.DIConstructorArgA"></bean>
+        </constructor-arg>
+        <constructor-arg>
+            <bean class="com.sun.health.flowable.spring.DIConstructorArgB"></bean>
+        </constructor-arg>
+    </bean>
+
+    <bean id="javaCollection" class="com.sun.health.flowable.spring.JavaCollection">
+        <property name="addressList">
+            <list>
+                <value>A</value>
+                <value>B</value>
+                <value>C</value>
+                <value>C</value>
+            </list>
+        </property>
+        <property name="addressSet">
+            <set>
+                <value>A</value>
+                <value>B</value>
+                <value>C</value>
+                <value>C</value>
+            </set>
+        </property>
+        <property name="addressMap">
+            <map>
+                <entry key="1"><null/></entry>
+                <entry key="2" value="B" />
+                <entry key="3" value="C" />
+                <entry key="4" value="C" />
+            </map>
+        </property>
+        <property name="addressProps">
+            <props>
+                <prop key="1">A</prop>
+                <prop key="2">B</prop>
+                <prop key="3">C</prop>
+                <prop key="4">C</prop>
+            </props>
+        </property>
     </bean>
 
 </beans>
