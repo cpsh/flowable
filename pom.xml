@@ -10,6 +10,7 @@
 
     <properties>
         <spring-vesion>4.3.16.RELEASE</spring-vesion>
+        <aspectJ-version>1.8.9</aspectJ-version>
     </properties>
 
 
@@ -135,6 +136,22 @@
             <artifactId>spring-websocket</artifactId>
             <version>${spring-vesion}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjrt -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>${aspectJ-version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.aspectj/aspectjtools -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjtools</artifactId>
+            <version>${aspectJ-version}</version>
+        </dependency>
+
+
 
 
         <!-- https://mvnrepository.com/artifact/org.flowable/flowable-engine -->

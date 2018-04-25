@@ -27,4 +27,9 @@ public class Student {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void printThrowException() {
+        System.out.println("Exception raised");
+        throw new IllegalArgumentException();
+    }
 }

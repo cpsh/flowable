@@ -2,8 +2,14 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd"
        default-init-method="init"
        default-destroy-method="destroy"
 >
@@ -292,6 +298,35 @@
             一个类被AOP织入增强后，产出一个结果类，融合原类和增强逻辑的代理类。
         8.Aspect 切面
             切面有切点和增强组成，既包括横切逻辑定义，也包括连接点的定义，AOP是负责实施切面的框架，将切面所定义的横切逻辑织入到切面所指定的连接点中
+        通知的类型
+        1.前置通知      在一个方法执行之前，执行通知
+        2.后置通知      在一个方法执行之后，不考虑结果，执行通知
+        3.返回后通知     在一个方法执行之后，只有在方法成功之后才执行通知
+        4.抛出异常后通知 在一个方法执行之后，只有方法在抛出异常时，才执行通知
+        5.环绕通知      在方法调用前后执行通知
+        实现
+        Spring支持@AspectJ annotation style的方法和基于XML模式
+
+        Spring中基于AOP的XML架构
+        需要在xml中引入aop的命名控件标签
+        <aop:config>
+            <aop:aspect id="" ref="">
+                <aop:pointcut id="" expression="" />
+                <aop:before pointcut-ref="" method="" />
+                <aop:after pointcut-ref="" method="" />
+                <aop:after-returning pointcut-ref="" method="" returning="返回的参数名" />
+                <aop:after-throwing pointcut-ref="" method="" throwing="抛出异常的参数名" />
+                <aop:around pointcut-ref="" method="" />
+
+        <aop:aspect> 定义切面(切面包括通知和切点）
+        <aop:advisor> 定义通知其（跟切点一致，包括通知和切点）
+        1.实现方式不同
+        <aop:aspect>只需定义普通的Bean即可 <aop:advisor>则需要实现Advice接口
+        aop:advisor简化 基本只管理前后  大多用于事务管理
+        aop:aspect则用于日志，缓存
+
+        Spring中基于AOP的@AspectJ
+        配置<aop:aspectj-autoproxy /> 支持@AspectJ
     -->
 
     <context:annotation-config />
@@ -430,5 +465,33 @@
     <bean id="profile" class="com.sun.health.flowable.spring.Profile">
 
     </bean>
+
+
+    <aop:config>
+        <aop:pointcut id="selectAll" expression="execution(* com.sun.health.flowable.spring.*.*(..))" />
+        <!--<aop:aspect id="log" ref="logging">
+            <aop:before pointcut-ref="selectAll" method="beforeAdvice" />
+            <aop:after pointcut-ref="selectAll" method="afterAdvice" />
+            <aop:after-returning method="afterReturningAdvice" pointcut-ref="selectAll" returning="returnVal" />
+            <aop:after-throwing method="afterThrowingAdvice" pointcut-ref="selectAll" throwing="ex" />
+            <aop:around method="aroundAdvice" pointcut-ref="selectAll" />
+        </aop:aspect>-->
+        <!--<aop:advisor advice-ref="customAdviceHandler" pointcut-ref="selectAll" />-->
+    </aop:config>
+
+    <aop:aspectj-autoproxy />
+
+    <bean id="customAdviceHandler" class="com.sun.health.flowable.spring.CustomAdviceHandler">
+
+    </bean>
+
+    <bean id="student" class="com.sun.health.flowable.spring.Student">
+        <property name="age" value="23" />
+        <property name="name" value="SS" />
+    </bean>
+
+    <bean id="logging" class="com.sun.health.flowable.spring.Logging"></bean>
+
+    <bean id="aspectJLogging" class="com.sun.health.flowable.spring.AspectJLogging" />
 
 </beans>

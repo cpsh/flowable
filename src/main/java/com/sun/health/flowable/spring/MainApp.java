@@ -18,7 +18,7 @@ public class MainApp {
 //        HelloWorld helloWorld = (HelloWorld) beanFactory.getBean("helloWorld");
 //        System.out.println(helloWorld.getMessage());
 
-//        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("application-context.xml");
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("application-context.xml");
 //        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("application-context.xml");
 //        HelloWorld helloWorld = (HelloWorld) applicationContext.getBean("helloWorld");
 //        System.out.println(helloWorld.getMessage());
@@ -104,13 +104,19 @@ public class MainApp {
 //        HelloWorld helloWorld = (HelloWorld) annotationApplicationContext.getBean("helloWorld");
 //        System.out.println(helloWorld.getMessage());
 
-        ApplicationContext annotationApplicationContext = new AnnotationConfigApplicationContext(TextEditorConfig.class);
-        TextEditor textEditor = (TextEditor) annotationApplicationContext.getBean("textEditor");
-        textEditor.spellCheck();
+//        ApplicationContext annotationApplicationContext = new AnnotationConfigApplicationContext(TextEditorConfig.class);
+//        TextEditor textEditor = (TextEditor) annotationApplicationContext.getBean("textEditor");
+//        textEditor.spellCheck();
+//
+//        CustomEventPublisher publisher = (CustomEventPublisher) annotationApplicationContext.getBean("customEventPublisher");
+//        publisher.publish(null);
+//        publisher.publish(null);
 
-        CustomEventPublisher publisher = (CustomEventPublisher) annotationApplicationContext.getBean("customEventPublisher");
-        publisher.publish(null);
-        publisher.publish(null);
+
+        Student student = (Student) applicationContext.getBean("student");
+        student.getAge();
+        student.getName();
+        student.printThrowException();
 
 
     }
