@@ -1,28 +1,27 @@
 package com.sun.health.flowable.spring;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
+
+import javax.annotation.Resource;
+
 public class DIConstructorObj {
 
+//    @Resource(name = "", type = String.class)
     private int num;
 
+    @Autowired
     private String str;
 
+    @Autowired
     private DIConstructorArgA argA;
 
     private DIConstructorArgB argB;
 
+    @Autowired(required = false)
+    private String noSetter;
+
     public DIConstructorObj() {
-    }
-
-    public DIConstructorObj(int num, String str, DIConstructorArgA argA, DIConstructorArgB argB) {
-        this.num = num;
-        this.str = str;
-        this.argA = argA;
-        this.argB = argB;
-    }
-
-    public DIConstructorObj(DIConstructorArgA argA, DIConstructorArgB argB) {
-        this.argA = argA;
-        this.argB = argB;
     }
 
     public DIConstructorObj(int num, String str) {
@@ -40,10 +39,27 @@ public class DIConstructorObj {
         this.argB = argB;
     }
 
+    public DIConstructorObj(DIConstructorArgA argA, DIConstructorArgB argB) {
+        this.argA = argA;
+        this.argB = argB;
+    }
+
+    public DIConstructorObj(int num, String str, DIConstructorArgA argA, DIConstructorArgB argB) {
+        this.num = num;
+        this.str = str;
+        this.argA = argA;
+        this.argB = argB;
+    }
+
+
+
+
+
     public int getNum() {
         return num;
     }
 
+//    @Required
     public void setNum(int num) {
         this.num = num;
     }
@@ -60,6 +76,7 @@ public class DIConstructorObj {
         return argA;
     }
 
+//    @Required
     public void setArgA(DIConstructorArgA argA) {
         this.argA = argA;
     }
@@ -68,7 +85,12 @@ public class DIConstructorObj {
         return argB;
     }
 
+    @Autowired
     public void setArgB(DIConstructorArgB argB) {
         this.argB = argB;
+    }
+
+    public String getNoSetter() {
+        return noSetter;
     }
 }

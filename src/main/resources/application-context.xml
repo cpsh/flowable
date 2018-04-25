@@ -193,7 +193,108 @@
         需要注入空值null和空字符串的
         1.value=""即为空字符串
         2.<null/>作为null值
+
+
+        SpringBean 自动装配
+        Spring容器可以在不使用<constructor-arg>和<property>元素的情况下自动装配相互协作的bean之间的关系。
+        <bean autowired="">
+        模式          描述
+        no          默认配置，不自动装配，应该使用显式的Bean引用
+        byName      由属性名自动装配，尝试使用和属性名相同的bean来装配
+        byType      有属性数据类型自动装配，尝试使用配置中类型匹配的bean，如果有多个则抛出异常
+        constructor 类似于byType，但适用于构造函数参数类型，如果没有匹配则抛出异常
+        autodetect  首先尝试构造函数装配，如果失败则使用byType类型
+        自动装配的优缺点
+        优点：可以显著减少需要指定的属性或构造参数
+        缺点：1.重写的可能性 2.原始数据类型 不能自动配装简单类型包括基本类型、字符串和类 3.混乱 自动装配不如显式装配精确，尽可能使用显式装配
+
+        Spring 自动装配 byName
+        尝试将属性名和beanId相同的进行装配
+
+        Spring 自动装配 byType
+        尝试使用属性相同类型的Bean进行装配 不存在或多个时抛出异常
+
+        Spring由构造函数自动装配
+        与byType非常相似，但应用于构造参数。
+
+
+        Spring基于注解的配置
+        在XML之前进行注解注入，后者会被前者覆盖
+        需要<context:annotation-config />开启注解扫描
+        1. @Required 应用于bean属性的setter方法
+        2. @Autowired 应用于setter方法，非setter方法，构造函数和属性
+        3.@ Qualifier 显式指定bean
+        4.JSR-250 Annotations Spring支持JSR-250的基础的注解，其中包括@Resource @PostConstruct @PreDestroy
+
+        @Required
+        应用于bean类的setter方法上，表示注解的bean属性在配置时必须放在XML配置文件中，否则抛出异常。
+
+        @Autowired
+        在setter上使用@Autowired 会尝试byType自动装配
+        在属性上使用@Autowired可以消除setter方法
+        在构造函数上使用@Autowired可以注入对象,即便没有配置
+        @Autowired(required=false) 默认@Autowired依赖时必须的，类似于@Required，可以添加required=false来关闭默认行为
+
+        @Qualifier("bean_id")
+        配合@Autowired注入指定ID的bean 可以避免存在多个相同类型的bean时抛出异常
+
+        Spring JSR-250 注释
+        @PostConstruct      可以用于代替初始化方法
+        @PreDestroy         可以用于代替销毁方法
+        @Resource           指定name参数，则可用于byName自动装配
+
+        Spring基于Java的配置
+        基于Java 的配置
+        可以不配置XML编写大多数功能
+
+        @Configuration和@Bean注解
+        带有@Configuration的注解类表示这个类可以使用Spring IoC容器作为bean定义的来源。@Bean注解的方法将返回一个对象，这个对象应该被注册在Spring应用程序上下文汇总。
+        @Scope("") 指定作用域
+        @Import(XXXConfig.class) 导入其他Java配置类
+        @Bean(initMethod="", destroyMethod="") 指定初始化和销毁方法
+        @Conditional({
+            <? extends Condition>.class
+        }) 用于判断是否创建此Bean
+
+        Spring中的事件处理
+        ApplicationContext负责管理beans的完整生命周期，ApplicationContext在特定情况会发布某些事件，例如，上下文启动时，ContextStartedEvent，上下文结束时，ContextStoppedEvent发布
+        通过ApplicationEvent类和ApplicationListener接口来提供在ApplicationContext中处理事件。如果bean实现了ApplicationListener，ApplicationContext发布ApplicationEvent时会接到通知
+        Spring 提供标准事件
+        1.ContextRefreshEvent           ApplicationContext被初始化或刷新时，改事件发布 ApplicationContext.refresh()
+        2.ContextStartedEvent           使用ConfigurableApplicationContext接口start()方法启动时，发布该事件
+        3.ContextStoppedEvent           使用ConfigurableApplicationContext的stop()方法
+        4.ContextClosedEvent            ConfigurableApplicationContext的close()方法
+        5.RequestHandledEvent           这是web-specific事件，通知bean HTTPRequest可用
+        Spring的事件处理器是单线程的，一个事件发布，堵塞至所有接受者都得到改消息
+
+
+
+        Spring框架的AOP
+        Spring框架另一个关键组件是面向切面的编程（AOP)。
+        AOP术语
+        1.JoinPoint 连接点
+            程序执行到某个特定位置：如类开始初始化前、类初始化后、类某个方法调用前、调用后、方法抛出异常后。一个类或一段程序代码拥有一些具有边界性质的特定点，这些点中的特定点就称为连接点。Spring仅支持方法的连接点，即仅能在方法调用前、调用后、抛出异常时这些程序执行点织入增强。连接点由两个信息确定：第一是用方法表示的程序执行点，第二是用相对点表示的方位。
+        2.Pointcut 切点
+            每个程序类都拥有多个连接点。AOP通过切点定位特定的连接点。连接点相当于数据库中的记录，而切点相当于查询条件。一个切点可以匹配多个连接点。在Spring中，切点通过PointCut接口描述，使用类和方法作为连接点的查询条件，SpringAOP的规则解析引擎负责切点锁设定的查询条件，找到对应的连接点
+        3.Advice 增强
+            增加是织入到目标类连接点上的一段程序代码，在Spring中，增强除了用于描述一段程序代码外，还拥有另一个和连接点相关的信息，便是执行点的方位，结合执行点方位信息和切点信息，可以定位到特定的连接点。
+        4.TargetObject 目标对象
+            增强逻辑的织入目标类。没有AOP，目标业务类需要自己实现所有逻辑，而在AOP帮助下，目标业务类只实现非横切的程序逻辑，注入性能监控和实物管理等这些横切逻辑则可以使用AOP动态织入到特定的连接点上。
+        5.Introduction 引介
+            引介是一种特殊的增强，为类添加一些属性和方法。即使一个业务类原本没有实现某个接口，通过引介可以动态为业务类添加接口的实现逻辑，使业务类称为接口的实现类。
+        6.Weaving 织入
+            将增强添加到目标类具体连接点上的过程。AOP有3中织入方式
+            1.编译期织入 使用特殊的Java编译期
+            2.类装载期织入 使用特殊的类装载器
+            3.动态代理织入 在运行期为目标类添加增强生成子类的方式
+            Spring使用动态代理 AspectJ使用编译期和类装载期
+        7.Proxy 代理
+            一个类被AOP织入增强后，产出一个结果类，融合原类和增强逻辑的代理类。
+        8.Aspect 切面
+            切面有切点和增强组成，既包括横切逻辑定义，也包括连接点的定义，AOP是负责实施切面的框架，将切面所定义的横切逻辑织入到切面所指定的连接点中
     -->
+
+    <context:annotation-config />
 
     <bean id="helloWorld" class="com.sun.health.flowable.spring.HelloWorld" scope="singleton" init-method="init_method" destroy-method="destroy_method">
         <property name="message" value="你好！" />
@@ -203,8 +304,6 @@
     <bean class="com.sun.health.flowable.spring.BBeanPostProcessor" />
 
     <bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor" />-->
-
-    <!--<context:annotation-config />-->
 
     <bean id="abstractParent" abstract="true">
         <property name="messageA" value="Abstract A" />
@@ -224,7 +323,16 @@
         <property name="messageC" value="Child C" />
     </bean>
 
+    <bean id="num" class="java.lang.Integer">
+        <constructor-arg value="11" />
+    </bean>
+
+    <bean id="str" class="java.lang.String">
+        <constructor-arg value="ELEVEN" />
+    </bean>
+
     <bean id="argA" class="com.sun.health.flowable.spring.DIConstructorArgA"></bean>
+    <!--<bean id="argAErr" class="com.sun.health.flowable.spring.DIConstructorArgA"></bean>-->
 
     <bean id="argB" class="com.sun.health.flowable.spring.DIConstructorArgB"></bean>
 
@@ -289,6 +397,38 @@
                 <prop key="4">C</prop>
             </props>
         </property>
+    </bean>
+
+
+
+    <bean id="obj5" class="com.sun.health.flowable.spring.DIConstructorObj" autowire="byName">
+
+    </bean>
+
+    <bean id="obj6" class="com.sun.health.flowable.spring.DIConstructorObj" autowire="byType">
+
+    </bean>
+
+    <bean id="obj7" class="com.sun.health.flowable.spring.DIConstructorObj" autowire="constructor">
+
+    </bean>
+
+    <bean id="obj8" class="com.sun.health.flowable.spring.DIConstructorObj">
+
+    </bean>
+
+    <bean id="student1" class="com.sun.health.flowable.spring.Student">
+        <property name="name" value="S1" />
+        <property name="age" value="11" />
+    </bean>
+
+    <bean id="student2" class="com.sun.health.flowable.spring.Student">
+        <property name="name" value="S2" />
+        <property name="age" value="22" />
+    </bean>
+
+    <bean id="profile" class="com.sun.health.flowable.spring.Profile">
+
     </bean>
 
 </beans>
