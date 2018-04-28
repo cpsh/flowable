@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
+
+>
+
+    <bean id="testPointCutA" class="com.sun.health.flowable.spring.TestPointCutA" />
+
+    <bean id="customAdvisor" class="com.sun.health.flowable.spring.CustomAdvisor" />
+
+    <bean id="customAspect" class="com.sun.health.flowable.spring.CustomAspect" />
+
+    <aop:config>
+        <aop:pointcut id="test_advisor_a" expression="execution(* com.sun.health.flowable.spring.TestPointCutA.funcA(..))" />
+        <aop:pointcut id="test_advisor_b" expression="execution(* com.sun.health.flowable.spring.TestPointCutA.funcB(..))" />
+        <aop:advisor advice-ref="customAdvisor" pointcut-ref="test_advisor_a" />
+        <aop:aspect ref="customAspect">
+            <aop:before method="before" pointcut-ref="test_advisor_b" />
+            <aop:after method="after" pointcut-ref="test_advisor_b" />
+            <aop:after-returning method="afterReturning" pointcut-ref="test_advisor_b" returning="returnVal" />
+            <aop:after-throwing method="afterThrowing" pointcut-ref="test_advisor_b" throwing="err" />
+            <aop:around method="around" pointcut-ref="test_advisor_b" />
+        </aop:aspect>
+    </aop:config>
+    <aop:aspectj-autoproxy />
+
+    <bean id="customPointCut" class="com.sun.health.flowable.spring.CustomPointCut" />
+    <!--<bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor" />-->
+    <context:annotation-config />
+
+</beans>

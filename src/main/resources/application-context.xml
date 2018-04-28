@@ -327,6 +327,19 @@
 
         Spring中基于AOP的@AspectJ
         配置<aop:aspectj-autoproxy /> 支持@AspectJ
+        @Aspect 用于类 标注这是一个Aspect配置Java类
+        @Pointcut("") 用于方法 声明切点
+        @Before("pointcut_id")
+        @After("pointcut_id")
+        @AfterReturning(value = "pointcut_id", returning = "")
+        @AfterThrowing(value = "pointcut_id", throwing = "")
+        @Around("")
+
+        注意AfterReturning的方法使用Object类型参数接收返回值 AfterThrowing的方法使用Throwable接收抛出的异常
+        Around(ProceedingJoinPoint joinPoint) 主要使用ProceedingJoinPoint来操作切点的方法
+        Object result = joinPoint.proceed();
+        return result;
+        around()会改变方法执行的结果 慎重
     -->
 
     <context:annotation-config />
