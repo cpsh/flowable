@@ -340,6 +340,90 @@
         Object result = joinPoint.proceed();
         return result;
         around()会改变方法执行的结果 慎重
+
+
+        Spring JDBC框架
+        使用其他数据框架
+        基本都是配置datasource 然后使用框架提供的核心类
+
+        Spring 事务管理
+        数据库事务是一个被视为单一的工作单元的操作序列，要么完整执行，要不全不执行。事务管理是一个重要组成部分，事务概念的4个关键属性：
+        A Atomicity 原子性 要不全成功，要不全失败
+        C Consistency 一致性
+        I Isolation 隔离性
+        D Durability 持久性
+
+        Spring框架在不同的底层事务管理器APIs的顶部提供了一个抽象层。Spring支持编程式和声明式事务管理。
+
+        局部事务 VS 全局事务
+        局部事务特定于一个单一的事务资源，如一个JDBC连接，而全局事务则可以跨多个事务资源，如分布式系统中的事务。
+
+        编程式 VS 声明式
+        1.编程式：编程中管理事务，灵活但不易于维护
+        2.声明式：从业务代码中分离事务管理，使用注释或者XML配置管理事务
+
+        Spring 事务抽象
+        Spring事务抽象的关键是由org.springframework.transaction.PlatformTransactionManager接口定义
+        public interface PlatformTransactionManager {
+            // 根据指定的传播行为，该方法返回当前活动事务或者创建一个新的事务
+            TransactionStatus getTransaction(TransactionDefinition definition) throws TransactionException;
+            // 提交给定的事务和关于他的状态
+            void commit(TransactionStatus status) throws TransactionException;
+            // 执行一个给定事务的回滚
+            void rollback(TransactionStatus status) throws TransactionException;
+        }
+        TransactionDefinition是Spring中事务支持的核心接口
+        public interface TransactionDefinition {
+            // 返回传播行为
+            int getPropagationBehavior();
+            // 隔离级别
+            int getIsolationLevel();
+            // 事务名称
+            String getName();
+            // 事务必须最大存活时间
+            int getTimeout();
+            // 事务是否只读
+            boolean isReadOnly();
+        }
+
+        隔离级别
+        TransactionDefinition.ISOLATION_DEFAULT 默认隔离级别
+        TransactionDefinition.ISOLATION_READ_COMMITTED 会脏读、不可重复读、幻读
+        TransactionDefinition.ISOLATION_READ_UNCOMMITTED 会不可重复读、幻读，不会脏读
+        TransactionDefinition.ISOLATION_REPEATABLE_READ 会幻读，不会脏读、不可重复读
+        TransactionDefinition.ISOLATION_SERIALIZABLE 不会脏读、不可重复读、幻读
+
+        传播行为
+        TransactionDefinition.PROPAGATION_MANDATORY
+        支持当前事务，如果存在事务，就加入该事务，如果不存在则抛出异常
+        TransactionDefinition.PROPAGATION_NESTED
+        如果当前存在事务，则在嵌套事务内执行，如果没有事务，则执行与PROPAGATION_REQUIRED类似的操作
+        TransactionDefinition.PROPAGATION_NEVER
+        以非事务方式执行，如果当前存在事务，则抛出异常
+        TransactionDefinition.PROPAGATION_NOT_SUPPORTED
+        以非事务方式执行，如果当前存在事务，则将当前事务挂起
+        TransactionDefinition.PROPAGATION_REQUIRED
+        如果当前没有事务，就创建一个新事务，如果当前存在事务，就加入该事务，最常用的设置
+        TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        创建新事务，无论当前存不存在事务，都创建新事务
+        TransactionDefinition.PROPAGATION_SUPPORTS
+        支持当前事务，如果当前存在事务，就加入该事务，如果当前不存在事务，就以非事务执行
+        TransactionDefinition.PROPAGATION_DEFAULT
+        默认
+
+        TransactionStatus接口为事务代码提供了简单方法来控制事务的执行和查询事务状态
+        public interface TransactionStatus extends SavepointManager {
+            // 新事务时返回true
+            boolean isNewTransaction();
+            // 是否有一个保存点，否是基于一个保存点创建嵌套事务
+            boolean hasSavepoint();
+            // 设置rollback-only标记
+            void setRollbackOnly();
+            // 是否被标记rollback-only
+            boolean isRollbackOnly();
+            // 是否完成，是否提交或回滚
+            boolean isCompleted();
+        }
     -->
 
     <context:annotation-config />
