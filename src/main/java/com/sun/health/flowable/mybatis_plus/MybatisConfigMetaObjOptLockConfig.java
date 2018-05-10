@@ -22,8 +22,8 @@ import javax.sql.DataSource;
 /**
  * Created by 华硕 on 2018-05-08.
  */
-@Configuration
-@MapperScan("")
+//@Configuration
+//@MapperScan("")
 public class MybatisConfigMetaObjOptLockConfig {
 
     @Bean

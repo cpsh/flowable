@@ -15,4 +15,8 @@
         <result column="p_birthday" property="pBirthday" />
     </resultMap>
 
+    <select id="selectPPersonList" resultMap="BaseResultMap">
+        SELECT * FROM p_person
+    </select>
+
 </mapper>
