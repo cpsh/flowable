@@ -18,4 +18,6 @@ public interface PPersonMapper extends BaseMapper<PPerson> {
 
     List<PPerson> selectPPersonList(Pagination page);
 
+    Integer deleteAll();
+
 }

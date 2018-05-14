@@ -37,6 +37,7 @@
 
     <bean id="globalConfig" class="com.baomidou.mybatisplus.entity.GlobalConfiguration">
         <!--逻辑删除 配置下面3个参数-->
+        <property name="sqlInjector" ref="customSqlInjector" />
         <!--<property name="sqlInjector" ref="logicSqlInjector" />
         <property name="logicNotDeleteValue" value="1" />
         <property name="logicDeleteValue" value="-1" />-->
@@ -60,4 +61,5 @@
         <property name="basePackage" value="com.sun.health.flowable.mybatis_plus.dao" />
     </bean>
 
+    <bean id="customSqlInjector" class="com.sun.health.flowable.mybatis_plus.CustomSqlInjector"></bean>
 </beans>

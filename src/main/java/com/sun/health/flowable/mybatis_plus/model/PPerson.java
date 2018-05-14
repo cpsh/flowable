@@ -1,5 +1,6 @@
 package com.sun.health.flowable.mybatis_plus.model;
 
+import com.baomidou.mybatisplus.annotations.Version;
 import com.baomidou.mybatisplus.enums.IdType;
 import java.util.Date;
 import com.baomidou.mybatisplus.annotations.TableId;
@@ -21,6 +22,9 @@ public class PPerson extends Model<PPerson> {
 
     private static final long serialVersionUID = 1L;
 
+    @Version
+    private Integer version;
+
     @TableId(value = "p_id", type = IdType.AUTO)
     private Long pId;
     @TableField("p_name")
@@ -40,6 +44,13 @@ public class PPerson extends Model<PPerson> {
     @TableField("p_birthday")
     private Date pBirthday;
 
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
 
     public Long getpId() {
         return pId;
