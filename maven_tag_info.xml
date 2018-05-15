@@ -363,7 +363,9 @@
                 runtime:在执行时需要使用
                 system:需要提供外在相应的元素，通过systemPath取得
                 systemPath:仅用于范围system，提供相应的路径
-                optional:项目自身被依赖时，标注依赖是否传递，用于连续时使用-->
+                optional:项目自身被依赖时，标注依赖是否传递，用于连续时使用
+                import: 配合<type>pom</type>只能用于<dependencyManagement>中 表示从其他的pom中导入dependency的配置 解决单继承问题，不用从父类中引用依赖
+            -->
             <scope></scope>
             <!--仅用于system范围时，不推荐使用-->
             <systemPath></systemPath>
