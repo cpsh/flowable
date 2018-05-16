@@ -346,7 +346,153 @@
     CommandLineRunner接口提供对应用程序参数的访问（简单的字符串数组），而ApplicationRunner使用上述的ApplicationArguments接口
     如果定义了若干个CommandLineRunner或ApplicationRunner，必须按照顺序调用，可以显现Ordered接口或者使用Order注解
 
+    Application退出
+    可以继承ExitCodeGenerator，在选择继承DisposableBean或者@PreDestroy即可完成应用程序退出时调用
 
+    外部配置
+    Spring Boot允许外部化配置，以便在不同环境中使用相同的应用程序代码。可以使用properties文件，YMAL文件，环境变量和命令行参数来外部化配置。可以使用@Value注解将属性直接注入到bean中，该注释可通过Spring环境（Environment）抽象访问，或通过@ConfigurationProperties绑定到结构化对象
+    SpringBoot使用非常特别的PropertySource命令，旨在允许合理的覆盖值。属性按一下顺序选择：
+    1.HOME目录设置的Devtools全局属性（~/.spring-boot-devtools.properties)
+    2.单元测试中的@TestPropertySource注解
+    3.单元测试中的@SpringBootTest#properties注解属性
+    4.命令行参数
+    5.SPRING_APPLICATION_JSOn中的属性值（内嵌JSON嵌入到环境变量或系统属性中）
+    6.ServletConfig初始化参数
+    7.ServletContext初始化参数
+    8.来自java:comp/env的JNDI属性
+    9.Java系统属性(System.getProperties)
+    10.操作系统环境变量
+    11.RandomValuePropertySource，随机属性random.*中
+    12.jar包外的Profile-specific application properties（application-{profile}.properties和YAML变体）
+    13.jar包内的Profile-specific application properties（application-{profile}.properties和YAML变体）
+    14.jar包外的应用属性文件（application.properties和YAML变体）
+    15.jar包内的应用属性文件（application.properties和YAML变体）
+    16.在@Configuration上的@PropertySource注解
+    17.默认属性（使用SpringApplication.setDefaultProperties)
+
+    java -Dparam_name="param_value" -jar XXX.jar 启动时带参数用法
+
+    配置随机值
+    RandomValuePropertySource可用于注入随机值（例如，进入秘密或测试用例），可以产生整型，长整形，uuid或者字符串
+    my.secret=${random.value}
+    my.number=${random.int}
+    my.bignumber=${random.long}
+    my.uuid=${random.uuid}
+    my.number.less.than.ten=${random.int(10)}
+    my.number.in.range=${random.int[1024, 65536]}
+
+    访问命令行属性
+    默认情况下，SpringApplication将任何命令行参数转换为属性，并添加到Spring环境中。
+    不希望添加则使用SpringApplication.setAddCommandLineProperties(false)
+
+    应用程序属性文件
+    SpringApplication将从以下位置的application.properties(yml)文件总加载属性，并添加到Spring环境中
+    优先级从高到低
+    1.当前目录的/config子目录
+    2.当前目录
+    3.classpath中的/config包
+    4.classpath root路径
+    默认使用第一个找到的 之后的不覆盖前面的
+    可以使用spring.config.name修改识别的配置文件名 也可以使用spring.config.location显示引用位置
+    如果spring.config.location是目录而非文件，应该以/结尾并附加spring.config.name的名称，spring.config.location指定的文件以原样使用不支持配置文件的变体
+
+    指定配置(Profile-specific)的属性
+    除了application.properties文件外，还可以使用命名约定application-{profile}.properties定义的指定配置文件。环境具有一组默认配置文件，如果没有设置活动配置文件则加载来自application-default.properties的属性
+    指定配置文件（profile-specific）的属性从与标准application.properties相同的位置加载，指定配置（profile-specific）文件始终覆盖指定文件
+    如果有几个指定配置文件，则应用最后一个配置，例如，由spring.profiles.active属性指定的配置文件在通过SpringApplication API配置的配置之后添加 因此优先级最高
+
+    properties文件中的占位符
+    application.properties中的值在使用时通过已有的环境进行过滤，以便可以引用之前定义的值（例如，从系统属性）
+    app.name=MyAPP
+    app.description=${app.name} is a Spring Boot application
+
+    使用YAML替代Properties
+    YAML是JSON的超集，是分层配置数据的一种非常方便的格式，每当类路径中有SnakeYAML库时，SpringApplication类将自动支持YAML作为properties的替代方法
+    如果使用Starter，将自动提供SnakeYAML
+    加载YAML
+    SpringFramework提供了两个工具类加载YAML文档，YamlPropertiesFactoryBean将YAML作为Properties加载，YamlMapFactoryBean将YAML作为Map加载
+
+    @ConfigurationProperties(prefix = "")
+    可以直接将配置注入到变量中 并支持数组 Map等形式
+    game:
+        - Diablo
+        - WorldOfWarCraft
+        - StarCraft
+
+    多个YAML文件
+    server:
+        address: 192.168.1.100
+
+    三个减号
+    spring:
+        profiles: development
+    server:
+        address: 127.0.0.1
+
+    三个减号
+    spring:
+        profiles: production
+    server:
+        address: 192.168.1.120
+
+    @EnableConfigurationProperties(XXXProperties.class)
+
+    宽松绑定
+    firstName 可以是firstName first-name first_name FIRST_NAME
+
+    属性转换
+    当Spring绑定到@ConfigurationProperties bean时，Spring将尝试将外部应用程序属性强制转换为正确的类型。自定义类型转换，可以提供ConversionService Bean、CustomEditorConfiguration、@ConfigurationPropertiesBinding
+
+    @Validated 需要对此类参数验证
+    @NotNull @NotEmpty之类的验证注解
+
+    配置文件（profiles）
+    @Profile("")只在某些环节中可用 任何@Component或@Configuration都可以被标记
+    一般而言可以使用spring.profiles.active Environment属性来指定哪些配置文件处于激活状态 可以在任何方式指定属性 例如在application.properties中指定
+    或者使用命令行-Dspring.profiles.active=dev
+
+    spring.profiles.include: 用于添加激活的配置文件
+
+    日志
+    使用Common Logging进行内部日志记录,但是基础日志实现开放
+
+    日志格式
+    日期和时间
+    日志级别 ERROR WARN INFO DEBUG TRACE
+    进程ID
+    分隔符区分实际日志消息开始
+    线程名称 扩在方括号内
+    记录器名称 通常是源类名
+    日志消息
+    logging.file
+    logging.path
+    logging.level
+    logging.level.root
+    logging.level.org.springframework.web
+    logging.level.org.hibernate
+
+
+    SpringMVC自动配置
+    SpringBoot提供了适用于大多数应用程序的SpringMVC的自动配置
+    自动配置在Spring的默认值上添加一下功能
+    1.包含ContentNegotiatingViewResolver和BeanNameViewResolver bean
+    2.支持提供静态资源，包括对WebJars的支持
+    3.Converter，GenericConverter，Formatter的自动注册
+    4.支持HttpMessageConverters
+    5.自动注册MessageCodeResolver
+    6.静态index.html支持
+    7.自定义Favicon支持
+    8.自动使用ConfigurableWebBindingInitializer Bean
+
+    HttpMessageConverters
+    SpringMVC使用HttpMessageConverter接口转换Http请求和响应。包括一些开箱即用的合理配置，例如对象可以自动转换为JSON(Jackson库)或XML（使用jackson XML扩展，不可用则使用JAXB）。字符串默认使用UTF-8进行编码
+    JsonSerializer JsonDeserializer @JsonComponent
+
+    静态内容
+    默认情况下，SpringBoot将从类路径或ServletContext的根目录中的名为/static(或/public或resources)或/META-INF/resources的目录提供静态内容。使用Spring MVC中的ResourceHttpRequestHandler，可以通过添加自己的WebMvcConfigurerAdapter并覆盖addResourceHandlers方法来修改该行为
+    默认情况下。资源映射到/，但可以通过spring.mvc.static-path-pattern调整
+    spring.mvc.static-path-pattern=/resources/* 将资源重定向到/resources下
+    还可以使用spring.resources.static-locations来自定义静态资源位置
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"

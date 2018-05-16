@@ -1,5 +1,6 @@
 package com.sun.health.springboot;
 
+import com.sun.health.springboot.bean.MyBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
@@ -21,6 +22,9 @@ import java.util.List;
 public class Example {
 
     @Autowired
+    private MyBean myBean;
+
+    @Autowired
     public Example(ApplicationArguments args) {
         boolean debug = args.containsOption("debug");
         List<String> files = args.getNonOptionArgs();
@@ -35,7 +39,9 @@ public class Example {
 
     @RequestMapping("/")
     String home() {
-        return "Hello World!";
+        System.out.println(myBean.getGame());
+        System.out.println(myBean.getPf());
+        return "Hello World!" + myBean.getName() + myBean.getA()  + myBean.getB()  + myBean.getC()  + myBean.getD();
     }
 
     public static void main(String[] args) {

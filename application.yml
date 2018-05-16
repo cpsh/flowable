@@ -1,0 +1,26 @@
+name: NAMEINFILE
+
+a: A
+
+animal:
+  dog: wang
+  fish:
+    fat_head_fish: rua
+  cat: miao
+
+game:
+  - diablo
+  - worldOfWarcraft
+  - startcraft
+
+---
+spring:
+  profiles: dev
+
+pf: DEV
+
+---
+spring:
+  profiles: prod
+
+pf: PROD

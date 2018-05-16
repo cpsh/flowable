@@ -285,6 +285,13 @@
                     <include>com/sun/health/flowable/mybatis_plus/dao/xml/*.xml</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>config/*.*</include>
+                    <include>*.*</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

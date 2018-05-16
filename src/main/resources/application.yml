@@ -1,3 +1,7 @@
 spring:
   autoconfigure:
     exclude: [DataSourceAutoConfiguration.class]
+
+name: SJ
+
+c: C
