@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket</title>
+    <script type="javascript">
+        var socket = new WebSocket('ws://localhost:8080/webSocketServer');
+        socket.onopen = () => {
+            console.log('连接成功');
+            socket.send('连接成功');
+        };
+        socket.onerror = () => {
+            console.log('连接失败');
+        };
+        socket.onmessage = (e) => {
+            console.log(e.data);
+        };
+        socket.onclose = () => {
+            console.log('连接关闭');
+        };
+    </script>
+</head>
+<body>
+    <div>Body</div>
+</body>
+</html>
