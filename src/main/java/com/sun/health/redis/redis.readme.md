@@ -92,5 +92,83 @@ Redis2.6开始默认服务器时只读的。
 从服务器预定间隔发送Ping请求。
 32.repl-timeout 60
 a.从从服务器视角，同步期间的批量传输
-b.
+b.主服务器超时()
+c.从服务器超时()
 33.repl-disabled-tcp-nodelay no
+yes的时候，会使用更小的TCP信息包和更小的带宽发送数据到从服务器。显示到从服务器可以增加一个延迟，默认40微秒
+no的时候，会减少延迟，加大带宽。
+34.repl-backlog-size 1mb
+设置复制待办列表的大小。当一个从服务器断开连接后再次连接，不必完整重同步，部分重同步即可
+当有从服务器时，backlog才会被分配
+35.repl-backlog-ttl 3600
+一段时候内主服务器没有连接任何从服务器，将会释放backlog。
+注意，从服务器从不释放backlog，因为从服务器可能会被提升为主服务器。
+0表示不清空backlog
+36.slave-priority 100
+用于Redis哨兵按顺序选择提升为主服务器，越小的先被提升为主服务器
+0则不会被选择提升为主服务器
+37.min-slaves-to-write 3 min-slaves-max-lag 10
+当主服务器连接的从服务器少于N时，从服务器数据落后主服务器M秒时，可能设定为不接受写操作。
+0为禁用
+38.slave-announce-ip 5.5.5.5 slave-announce-port 1234
+
+39.requiredpass pwd
+要求客户端在执行其他命令之前发送验证密码。
+40.rename-command CONFIG b840fc02d524045429941cc15f59e41cb7be6c52
+可以给有危险的命令改变名称。比如吧CONFIG改为之后的参数。
+也可以彻底禁用一个命令使用rename-command CONFIG ""，重命名为空字符串
+41.maxclients 10000
+同时间客户端最大连接数
+42.maxmemory <bytes>
+设置内存使用限制在一个指定的bytes数量
+43.maxmemory-policy noevication
+到达最大内存时执行的策略
+lru least recently used         最长时间未使用
+lfu least frequently used       一段时间内最少使用
+a.volatile-lru  有过期时间的key使用lru
+b.allkeys-lru   所有key使用lru
+c.volatile-lfu  有过期时间的key使用lfu
+d.allkeys-lfu   所有key使用lfu
+e.volatile-random   有过期时间的key随机
+f.allkeys-random    所有key随机
+g.volatile-ttl  最接近过期时间都可以删除
+h.noeviction    不删除,返回error
+注意，没有合适的key释放时所有策略都会返回error
+44.maxmemory-samples 5
+每几个key做一次比较,选择合适的key释放
+45.lazyfree-lazy-eviction no lazyfree-lazy-expire no lazyfree-lazy-server-del no slave-lazy-flush no
+删除大量数据时可能造成服务器暂停，其他另一个进程在后台删除数据
+45.appendonly no
+RDB可能会丢失短时间内的数据，AOF则会保留输入的命令用于重建数据
+RDB可以是AOF共同使用，兼容
+46.appendfilename "appendonly.aof"
+append only文件名
+47.appendfsync everysec
+系统将数据实际写入硬盘而不是等待输出缓冲区有更多数据。
+a.no 随系统判断何时写入硬盘 最快
+b.always 每一次缓冲区有新数据就写入硬盘 最安全
+c.everysec 每一秒
+48.no-appendfsync-on-rewrite no
+
+49.auto-aof-rewrite-percentage 100 auto-aof-rewrite-min-size 64m
+AOF文件增加多少后进行重写，也可以设定最小值
+50.aof-load-truncated yes
+当Redis启动时，加载AOF文件可能会发现数据在尾部被截断
+yes时，Redis使用AOF启动并返回一个日志提示用户这个信息
+no时，则报错并拒绝启动，用户需要使用redis-check-aof工具修复AOF文件
+51.aof-use-rdb-preamble
+
+52.lua-time-limit 5000
+Lua脚本最大执行时间（单位微秒)
+53.cluster-enabled yes
+普通的redis服务器不能作为集群中的节点，需要设置cluster-enabled yes
+54.cluster-config-file node-6379.conf
+集群配置文件
+55.cluster-node-timeout 15000
+集群超时时间
+56.cluster-slave-validity-factor 10
+
+
+
+
+
