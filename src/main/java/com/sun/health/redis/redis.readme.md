@@ -611,4 +611,259 @@ Redis淘汰Key的方式
 AOF文件处理过期
 当一个key过期，会DEL key。当存在主从时，不会独立过期keys，而是等到master执行DEL命令。过期的key仍然会在数据库中存在，所以当从服务器被当选为主服务器时，会先执行过期操作再成为主服务器
 
+Redis作为LRU算法缓存使用
+当Redis被当做缓存使用，新增数据时，自动回收旧数据是很方便的。
+LRU是Redis唯一支持的回收方法。maxmemory指令用于将可用内存限制成一个固定大小，Redis使用LRU算法只是近似LRU。
+Maxmemory配置指令
+maxmemory配置指令用于配置Redis存储数据时指定限制的内存大小。可以通过redis.conf配置，--maxmemory 100m,或者CONFIG SET设置
+maxmemory为0代表没有内存限制，对于64位系统这是默认值，对于32位系统默认内存限制为3GB。
+当到达指定的限制内存大小时，需要选择不同行为，这就是策略。Redis可以仅仅对命令返回错误，这将使的内存被使用的更多，或者回收一些旧的数据来使得添加数据时可以避免内存限制。
+回收策略
+当maxmemory限制达到时，会使用maxmemory-policy指定的策略
+可用策略
+1.noeviction(不 eviction回收) 返回错误
+2.allkey-lru 尝试回收最少使用的键，所有键都参与
+3.volatile-lru 尝试回收最少使用的键，仅限于有过期时间的键
+4.allkeys-random 回收随机的键，所有键都参与
+5.volatile-random 回收随机的键，仅限于有过期时间的键
+6.volatile-ttl 回收存在过期时间较短的键
+回收进程如何工作
+1.客户端执行新的命令添加新的数据
+2.Redis检查内存使用情况，如果大于maxmemory限制，则根据设定好的策略进行回收
+3.新命令执行
+4.不断添加数据超过内存限制，则不断回收内存保证不超过内存限制。
+近似LRU算法
+Redis的LRU算法并非完整实现，这意味Redis并不选择最佳候选来回收。而是尝试运行一个近似LRU算法，通过对少量key进行取样，然后回收其中最早访问的key.
+从Redis3.0算法被改进为回收键的候选池子，改善了算法的性能，更加近似LRU算法的行为。
+RedisLRU算法有个很重要的点是可以调整每次回收时检查的采样数量，以实现算法精度。
+maxmemory-samples 5
 
+Redis事务
+MULTI、EXEC、DISCARD、WATCH、UNWATCH是Redis事务相关的命令。事务可以一次执行多个命令，并有两个重要保证
+1.事务是一个单独的隔离操作，事务中所有命令都会序列化，按顺序执行。事务在执行过程中，不会被其他客户端发送的命令请求打断。
+2.事务是一个原子操作，事务中的命令要么全部被执行，要么全部都不执行
+EXEC命令负责触发并执行事务中的所有命令
+如果客户端执行MULTI后没有执行EXEC，则事务范围内所有命令都不会执行
+另一个方面，如果成功执行EXEC,则事务范围内所有命令都会被执行
+使用AOF方式做持久化时，Redis会使用单个write(2)命令将事务写入磁盘中
+用法
+MULTI命令用于开启一个事务，总是返回OK。MULTI执行之后，客户端可以继续向服务器发送任意多条命令，这些命令不会立即被执行，而是被放置于一个队列中，当EXEC被执行时，所有队列中的命令才会被执行
+另一方面，通过调用DISCARD,客户端可以清空事务队列，并放弃执行事务。
+EXEC命令的回复是数组，每个元素都是执行事务中的命令产生的回复。先后顺序一致。
+处于事务状态时，所有传入命令都会返回一个内容为QUEUED的状态回复。
+事务中的错误
+使用事务可能遇到两种情况：
+1.在执行EXEC之前，入队的命令可能会出错。比如，语法错误或其他更严重的错误如内存不足。以前的做法是检查命令入队所得的返回值，如果返回QUEUED，那么入队成功，否则入队失败。如果有命令在入队时失败，大部分客户端都会停止并取消事务。而从2.6.5版本开始，服务器会命令入队失败的情况进行记录，并在执行EXEC时拒绝执行并自动放弃此事务。之前，Redis只执行入队成功的命令而忽略失败的命令。
+2.在执行EXEC之后。没有特别处理，即使事务中某个/某些命令在执行时产生错误，事务中的其他命令仍然会继续执行
+Redis为何不支持回滚
+优点
+1.Redis命令只因为错误的语法失败，或是命令用在了错误类型的key上，也就是说，失败的命令由编程错误造成的，而这些错误应该在开发的过程中被发现，而不应该出现在生产中。
+2.不需要对回滚进行支持,Redis内部可以保持简单且快速
+
+
+大量数据插入
+cat data.txt | redis-cli --pipe
+从文件中批量导入
+编辑一个文件写入命令
+redis-cli只支持DOS格式的换行符\r\n，需要转码(unix2dos)
+
+分区
+主要目的：
+1.分区可以让Redis管理更大的内存，Redis将可以使用所有机器的内存。
+2.分区使Redis的计算能力通过简单地增加计算机得到成倍提升
+基本概念
+有很多分区标准，有很多存储方案，有很多映射方案
+一种最简单的方式范围分区，就是将不同范围的对象映射到不同Redis实例。
+另一种可选的方案是散列分区，要求更低，不需要key必须是object_name:<id>的形式。
+1.使用散列函数将键名称转换为数字
+2.对转换后的散列值进行取模，产生一个数字决定使用的Redis实例
+缺点：
+1.涉及多个key的操作通常不会被支持
+2.不能使用事务操作多个key
+3.数据处理会非常复杂
+4.分区时动态扩容会锁容会非常复杂
+持久化和缓存
+1.如果Redis被当做缓存使用，使用一致性哈希算法实现动态扩容缩容
+2.如果作为持久化存储，必须使用固定的key-to-node映射关系，节点的数量一旦确定不能改变。
+分区实现
+Redis集群
+Twemproxy
+
+
+---------------------- 
+客户端使用
+redis-cli
+实践时再查询
+
+---------------------
+复制
+使用和配置主从复制非常简单，能使得Redis从服务器（slave）能精确复制Redis主服务器（master）的内容。每当slave和master连接断开，slave会自动重连到master上，并且无论期间发生什么，slave都会尝试让自身成为master的精确副本。
+主要依靠
+1.当master和slave实例连接正常时，master会发送一系列命令来保持对slave的更新，以便于将自身数据的改变复制给slave
+2.当master和slave连接断开时，slave重新连接上master并会尝试进行部分重同步，这意味会尝试只获取在断开连接期间丢失的命令
+3.当无法进行部分重同步时，slave会请求进行全量重同步，这会涉及到一个更复杂的过程，例如master需要创建所有数据的快照，发送给slave，再在数据更改时同步命令给slave
+Redis默认使用的是异步复制，特点是高延迟和高性能，是绝大多数Redis实例的自然复制模式。但是，slave会异步确认其master周期接收到的数据量。
+客户端可以使用WAIT命令来请求同步复制某些特定的数据。但是WAIT命令只能确保在其他Redis实例中有指定数量的已确定的副本。
+Redis基本复制功能的基本特性
+1.Redis使用异步复制，slave和master之间异步地确认处理的数据量
+2.master可以拥有多个slave
+3.slave可以接受其他slave的连接 4.0版本后，sub-slave将会从master处收到完全一样的复制流
+4.Redis复制在master侧是非阻塞的，意味着master在同步时是可以继续处理查询请求
+5.复制在slave侧大部分也是非阻塞的，同步时可以使用旧数据继续处理请求。但是完成同步后，旧数据必须被删除，同时加载新数据，slave在这个短暂的时间窗口中会阻塞连接请求。Redis4.0之后，可以配置删除在另一个线程中进行，加载新数据必须在主线程中，并阻塞请求。
+6.复制既可以被用在可伸缩性，也可以仅用于数据安全
+7.可以使用复制来避免master将全部数据集写入磁盘造成的开销。
+使用复制时，强烈建议master和slave中启用持久化，当不可能启用时，应该配置实例来避免重置后自动重启。
+Redis复制工作原理
+每个master都有一个ReplicationId,是一个较大的伪随机字符串，标记了一个给定的数据集。每个master持有一个偏移量，master将自己产生的复制流发送给slave时，发送多少字节的数据，自身的偏移量就会增加多少，目的是当有新的操作修改数据集时，可以以此更新slave的状态。即使没有slave连接到master也会自增，所以每一对给定的replicationId和offset都是会标识一个master数据集的精确版本
+slave连接到master时，使用PSYNC命令发送记录的旧的master replicationId和offset。通过这种方式master能够金发送slave所需要的增量部分。但是如果master的缓冲区没有足够的命令积压缓冲记录，或者slave引用了不知道的replicationId，则会转而进行一次全量同步
+全量同步工作细节
+master开启一个后台保存进程，产生一个RDB文件，同时缓冲所有从客户端接收到的新的写入命令。当后台保存完成时，master将数据集文件发送给slave，slave保存到磁盘上再加载到内存中。再然后master会发送所有缓冲的命令给slave
+无需磁盘参与的复制
+Redis2.8.18第一次支持无硬盘复制，子进程直接发送RDB给slave。
+配置
+配置基本的Redis复制功能很简单，添加配置信息到slave的conf中即可
+slaveof host port
+也可以使用SLAVEOF命令
+无磁盘复制可以使用repl-diskless-sync配置参数，repl-diskness-sync-delay参数可以延迟启动数据传输，目的可以在第一个slave就绪后等到更多的slave就绪。
+只读性质的slave
+Redis2.6后，slave支持只读模式且默认开启。redis.conf中的slave-read-only参数控制，可以使用CONFIG SET动态配置
+密码验证
+masterauth password
+从Redis2.8开始，只有当至少N个slave连接到master时，才允许master接受写请求。
+1.slave每秒都会ping master，确认已处理的复制流的数量
+2.master会记得上一次从每个slave收到ping的时间
+3.用户可以配置最少slave数量和最大滞后时间，master才接受写操作
+min-slaves-to-write
+min-slaves-max-lag
+Redis复制如何处理过期
+1.slave不会让key过期，而是等待master让key过期，当key过期时，master会发送一个DEL命令
+
+---------------------------------
+Redis持久化
+Redis提供了不同级别的持久化方式
+1.RDB持久化方式能够在指定时间间隔对数据进行快照存储
+2.AOF持久化方式记录每次对服务器写的操作，当服务器重启时会重新执行这些命令来恢复原始数据，AOF命令以redis协议追加保存每次写操作到文件末尾。Redis还能对AOF文件进行后台重写，避免体积过大。
+3.如果只希望数据在服务器运行时存在，可以不适用持久化技术
+4.可以同时开启两种持久化方式，重启时会优先载入AOF文件。
+RDB优点
+1.RDB是一个非常紧凑的文件，保存了某个时间点的数据集，非常适用于数据集的备份。
+2.RDB是一个紧凑的单一文件，很方便传输
+3.RDB保存时父进程唯一需要做的就是fork出子进程
+4.与AOF相比，在恢复大量数据时，RBD方式会更快一些
+RDB缺点
+1.希望Redis服务器意外停止的情况下丢失数据量最少，不适宜使用RBD
+2.RDB需要经常fork出子进程保存数据集，当数据集较大时，fork过程十分耗时。
+AOF优点
+1.使用AOF会使Redis更耐久，可以使用不同的fsync策略，无,每秒，每次写操作，默认每秒，性能依旧很好，出现故障最多损失以秒的数据
+2.AOF文件是一个只进行追加的日志文件，所以不需要写入seek,即使由于某些原因（磁盘已满，写过程中宕机）未执行完整的写入命令，也可以使用redis-check-aof工具修复。
+3.Redis可以在AOF文件过大时，自动在后台对AOF进行重写，重写后的新AOF文件包含了恢复当前数据集所需的最小命令集合。重写过程是绝对安全的。
+4.AOF文件有序的保存了对数据库执行的所有写入操作，以Redis协议的格式保存，内容易懂，分析和导出也非常简单。
+AOF缺点
+1.对于相同的数据集而言，AOF文件的体积通常较大
+2.根据所使用fsync策略，AOF的速度可能会慢于RDB.
+一般而言，应该同时使用两种持久化功能。
+快照
+在默认情况下，Redis将数据库快照保存在名字为dump.rdb的二进制文件中。可以对Redis进行设置，让"N秒内数据集至少M此改动”条件满足时，自动保存数据集。也可以通过BGSAVE和SAVE手动保存。
+save 60 1000 # 60秒内涉及1000个键的变动
+这个持久化方式称为快照snapshotting
+RDB工作方式
+1.Redis调用fork命令，复制一个子进程
+2.子进程将数据集写入一个临时的RDB文件中
+3.子进程完成数据集保存，将新RDB文件替换旧RDB文件，再删除旧RDB文件
+AOF(Append-only File)
+appendonly yes # 启动AOF持久化
+可以使用BGREWRITEAOF命令重写AOF文件，包含重建当前数据集最少的命令集。
+fsync
+1.每次有新命令就fsync一次
+2.每秒fsync一次
+3.从不fsync，将数据交给操作系统处理
+AOF损坏
+先备份，再使用redis-check-aof工具
+redis-check-aof -fix
+AOF重写工作原理
+1.Redis执行fork，拥有一个子进程
+2.子进程开始新的AOF文件的内容写入临时文件
+3.对于新执行的写命令，父进程一边累积到内存缓冲中，一边将改动追加到现有AOF文件的末尾
+4.子进程完成重写工作时，给父进程发送一个信号，父进程接受到信号后，将内存缓冲中的所有数据追加到新AOF文件末尾
+5.新AOF文件替换旧的
+
+-------------
+redis安全
+Redis并没有最大优化安全方面，而是尽最大可能优化性能和易用性。
+网络安全
+bind 127.0.0.1 指定HOST才能访问Redis
+认证
+在redis.conf中配置
+requirepass sjfajfpawjoawgo
+AUTH或-a 验证密码
+禁用特殊命令
+rename-command CONFIG atagugsoehgohgpseg 
+rename-command CONFIG "" # 禁用
+
+------------ Redis信号处理
+SIGTERM信号处理
+会让Redis安全关闭。Redis收到信号时并不立即退出，而是开启一个定时任务，这个任务就类似执行一次SHUTDOWN命令。这个定时关闭任务会在当前执行命令终止后立即执行，通常由0.1秒或更短的延迟。
+万一被LUA脚本阻塞，会SCRIPT KILL终止LUA脚本，再执行定时任务。
+Shutdown过程通常包含步骤
+1.如果存在正在执行RDB文件保存或AOF重写的子进程，子进程终止。
+2.如果AOF开启，会通过系统调用fsync将AOF内存缓冲区的命令强制输出到磁盘中
+3.如果Redis配置RDB，那么此时就会进行同步保存。由于保存时同步的，就不需要额外的内存。
+4，如果Server是守护进程，PID文件会被移除
+5.Unix域的Socket可用，也会被移除
+6.Server退出，结果为0
+SIGSEGV,SIGBUS,SIGFPF,SIGILL信号
+Redis会崩溃并执行以下步骤
+1包括调用栈信息，寄存器信息，以及clients信息会以bug报告的形式写入日志文件。
+2自从Redis2.8（当前为开发版本）之后，Redis会在系统崩溃时进行一个快速的内存检测以保证系统的可靠性。
+3如果Server是守护进程，PID文件会被移除。
+4最后server会取消自己对当前所接收信号的信号处理器的注册，并重新把这个信号发给自己，这是为了保证一些默认的操作被执行，比如把Redis的核心Dump到文件系统。
+子进程被终止发生什么
+1.AOF重写的子进程终止，Redis会当成一次错误并丢弃这个AOF文件
+2.RDB保存的子进程终止，当成一次严重错误
+
+---------------------
+Redis如何处理客户端连接
+客户端的连接建立
+客户端连接最大值
+maxclients 10000
+输出缓冲限制
+Redis需要为每个客户端处理可变长度的输出，因为简单命令也可能产生巨大的数据量
+当客户端处理新消息的速度比服务端的速度还慢，特别是Pub/Sub客户端
+这两个原因将导致客户端输出缓冲增长及内存消耗增多。
+Redis使用两种类型的限制:
+1.硬限制是个固定的限制，当大小达到限制时Redis会尽快关闭客户端连接
+2.软限制依赖于时间
+不同类型客户端有不同默认限制
+1.普通客户端默认为0限制，意味着没有限制，大部分普通客户端使用阻塞实现发送单个命令，并且在发送下一个命令前等待答复以完全读取，因此去关闭普通客户端连接没有必要
+2.Pub/Sub客户端有默认32兆字节的硬限制和每60秒8兆字节的软限制
+3.从机有默认256兆的硬限制和每60秒64兆的软限制
+客户端超时
+默认不会在客户端空闲很久后自动关闭连接， 可以使用timeout配置
+CLIENT LIST
+
+
+---------------------
+Redis Sentinel(哨兵)
+Redis中的Sentinel系统用于管理多个Redis服务器，执行以下三个任务
+1.监控(Monitoring),Sentinel会不断检查主服务器和从服务器的运行状态
+2.提醒(Notification),当被监控的某个Redis服务器出现问题时，Sentinel可以通过API想管理员或其他应用程序发出提醒
+3.自动故障转移(Automatic failover),当主服务器不能正常工作时，Sentinel会开始一次自动故障转移操作。会将主服务器的其中一个从服务器提升为新的主服务器，并让失效主服务器的其他从服务器成为新主服务器的从服务器，当客户端尝试连接失效的主服务器时，会想客户端发送新主服务器的地址。
+Redis Sentinel是一个分布式系统，可以在一个架构中运行多个Sentinel进程，使用流言协议(gossip protocols)来接受关于主服务器是否下线的信息，并使用投票协议(agreement protocols)来决定是否执行自动故障转移
+虽然Sentinel有单独的可执行文件redis-sentinel，但实际上是一个运行在特殊模式下的Redis服务器。可以在启动一个普通Redis服务器时通过--sentinel选项来启动Redis Sentinel
+获取Sentinel
+2.8之后默认就有
+启动Sentinel
+redis-sentinel sentinel.conf
+redis-server sentinel.conf --sentinel
+启动Sentinel必须制定相应的配置文件，系统会使用配置文件保存Sentinel状态，并在重启时还原
+配置Sentinel
+运行Sentinel最少配置
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 60000
+sentinel failover-timeout mymaster 180000
+sentinel parallel-syncs mymaster 1
+
+sentinel monitor resque 192.168.1.3 6380 4
+sentinel down-after-milliseconds 10000
+sentinel failover-timeout resque 180000
+sentinel parallel-syncs resque 5
