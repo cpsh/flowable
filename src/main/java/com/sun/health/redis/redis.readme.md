@@ -867,3 +867,91 @@ sentinel monitor resque 192.168.1.3 6380 4
 sentinel down-after-milliseconds 10000
 sentinel failover-timeout resque 180000
 sentinel parallel-syncs resque 5
+第一行配置指示Sentinel监视名为mymaster的主服务器，IP地址为127.0.0.1，端口为6379，而将这个主服务器判断为失效至少需要2个Sentinel同意（只要同意的Sentinel的数量不达标，自动故障迁移就不会执行)
+需要注意，无论设置需要多少Sentinel同意才能判断服务器失效，Sentinel都需要获得多数Sentinel的支持，才能发起一次自动故障转移，并预留一个给定的配置纪元(就是一个新主服务器配置的版本号)
+sentinel monitor <主服务器名> <HOST IP地址> <PORT> <失效需要确认的Sentinel数>
+其他选项否基本格式
+sentinel <选项名称> <主服务器名> <选项的值>
+1.down-after-milliseconds 指定Sentinel认为服务器已经断线所需的毫秒数
+如果服务器在给定毫秒数之内，没有返回Sentinel发送的PING命令回复，或者返回一个错误，那么就将此服务器标记为主观下线。
+不过只有一个Sentinel将服务器标记为主观下线并不一定会引起服务器的自动故障转义，只有在足够数量的Sentinel都将服务器标记主观下线，服务器才会被标记为客观下线，此时自动故障转移才能执行。
+2.parallel-syncs 指定在执行故障转移时，最多可以有多少个从服务器同时对新的主服务器进行同步，这个数字越少完成故障转移所需时间就越长
+主观下线和客观下线
+1.主观下线（Subjectively Down，简称SDOWN）指的是单个Sentinel实例对服务器做出下线判断
+2.客观下线（Objectively Down,简称ODONW）指的是多个Sentinel实例对同一服务器做出SDOWN判断，并且通过Sentinel is-master-down-by-addr命令相互交流之后，得出服务器下线判断。
+如果服务器在down-after-milliseconds毫秒内没有响应或返回，则标记为主观下线。
+服务器对PING命令的有效回复可以是
+1.+PONG
+2.-LOADING # 错误
+3.-MASTERDOWN # 错误
+服务器返回除以上回复，或者超过则认为是主观下线。
+从主观下线到客观下线，Redis没有使用严格的法定人数算法，而是使用流言协议。接收到足够多的下线报告，就标记为主动
+客观下线只适用于主服务器，其他的无需协商。
+每个Sentinel都需要定时执行的任务
+1.每个Sentinel每秒一次向所知的主服务器、从服务器和其他Sentinel实例发送一个PING命令
+2.如果一个实例距离最后一次有效回复PING命令的时间超过down-after-milliseconds指定的值，那么就被视为主观下线，PING命令有效回复可以使PONG LOADING MASTERDOWN
+3.如果一个主服务器被标记为主观下线，并且有足够多的Sentinel在指定时间内同意，则此服务器被标记为客观下线
+4.在一般情况下，每个Sentinel会以10秒一次的频率向已知的所有主服务器、从服务器发送INFO命令。当一个主服务器被标记为主观下线，则向下线主服务器的所有从服务器发送INFO的频率提升到1秒一次
+5.当没有足够数量的Sentinel同意主服务器已经下线，主服务器的客观下线状态就会被移除。当主服务器重新发送PING并返回有效回复时，主观下线标记移除。
+自动发现Sentinel和从服务器
+Sentinel可以跟其他Sentinel连接，相互检查对方的可用性，并进行信息交换。无需为Sentinel设置其他Sentinel地址，因为Sentinel可以通过发布与订阅功能来自动发现正在监视相同主服务器的其他Sentinel，这一功能是通过向sentinel:hello发送信息来实现的。
+与此类似，也不必手动列出主服务器属下的所有从服务器，因为Sentinel可以通过询问主服务器来获得所有从服务器的信息。
+1.每个Sentinel会以2秒一次，通过发布与订阅功能，向监视的所有服务器的sentinel:hello频道发送一条消息，信息中包含了Sentinel的IP地址/端口号/运行ID
+2.每个Sentinel都订阅了被他监视的所有主服务器和从服务器的sentinel:hello频道，当发现新的Sentinel，则添加到一个保存了所有监视同一服务器的Sentinel的列表中。
+3.Sentinel发送的信息还包括完整的主服务器当前配置，如果一个Sentinel的配置较旧则更新。
+4.添加Sentinel到列表会替换
+Sentinel API
+Sentinel接受Redis协议格式的命令请求
+1.发送命令到Sentinel
+2.发布与订阅
+Sentinel命令
+1.PING
+2.SENTINEL masters 列出所有监视的主服务器 及当前状态
+3.SENTINEL slaves 列出给定主服务的所有从服务器 及当前状态
+4.SENTINEL get-master-addr-by-name 返回给定名字的主服务器的IP地址和端口号 故障转移返回新的IP和端口
+5.SENTINEL reset 重置所有名字匹配的主服务器
+6.SENTINEL failover 主服务失效时，不询问其他Sentinel意见，强制开始故障转移
+发布与订阅消息
+客户端可以将Sentinel看作是一个只提供订阅功能的Redis服务器，不可以使用PUBLISH命令向服务器发送信息，但可以用SUBSCRIBE或PSUBSCRIBE命令，通过订阅给定的频道获取响应的事件提醒
+订阅返回消息格式 <instance-type> <name> <ip> <port> @ <master-name> <master-ip> <master-port>
++reset-master ：主服务器已被重置。
++slave ：一个新的从服务器已经被 Sentinel 识别并关联。
++failover-state-reconf-slaves ：故障转移状态切换到了 reconf-slaves 状态。
++failover-detected ：另一个 Sentinel 开始了一次故障转移操作，或者一个从服务器转换成了主服务器。
++slave-reconf-sent ：领头（leader）的 Sentinel 向实例发送了 [SLAVEOF](/commands/slaveof.html) 命令，为实例设置新的主服务器。
++slave-reconf-inprog ：实例正在将自己设置为指定主服务器的从服务器，但相应的同步过程仍未完成。
++slave-reconf-done ：从服务器已经成功完成对新主服务器的同步。
+-dup-sentinel ：对给定主服务器进行监视的一个或多个 Sentinel 已经因为重复出现而被移除 —— 当 Sentinel 实例重启的时候，就会出现这种情况。
++sentinel ：一个监视给定主服务器的新 Sentinel 已经被识别并添加。
++sdown ：给定的实例现在处于主观下线状态。
+-sdown ：给定的实例已经不再处于主观下线状态。
++odown ：给定的实例现在处于客观下线状态。
+-odown ：给定的实例已经不再处于客观下线状态。
++new-epoch ：当前的纪元（epoch）已经被更新。
++try-failover ：一个新的故障迁移操作正在执行中，等待被大多数 Sentinel 选中（waiting to be elected by the majority）。
++elected-leader ：赢得指定纪元的选举，可以进行故障迁移操作了。
++failover-state-select-slave ：故障转移操作现在处于 select-slave 状态 —— Sentinel 正在寻找可以升级为主服务器的从服务器。
+no-good-slave ：Sentinel 操作未能找到适合进行升级的从服务器。Sentinel 会在一段时间之后再次尝试寻找合适的从服务器来进行升级，又或者直接放弃执行故障转移操作。
+selected-slave ：Sentinel 顺利找到适合进行升级的从服务器。
+failover-state-send-slaveof-noone ：Sentinel 正在将指定的从服务器升级为主服务器，等待升级功能完成。
+failover-end-for-timeout ：故障转移因为超时而中止，不过最终所有从服务器都会开始复制新的主服务器（slaves will eventually be configured to replicate with the new master anyway）。
+failover-end ：故障转移操作顺利完成。所有从服务器都开始复制新的主服务器了。
++switch-master ：配置变更，主服务器的 IP 和地址已经改变。 这是绝大多数外部用户都关心的信息。
++tilt ：进入 tilt 模式。
+-tilt ：退出 tilt 模式。
+故障转移
+1.发现主服务进入客观下线
+2.对当前纪元自增，并尝试在纪元中当选
+3.如果当选失败，那么在设定的故障转移超时时间两倍之后，重新尝试当选。如果当选成功，则执行以下步骤
+4.选出一个从服务器，并升级为主服务器
+5.向被选中的从服务器发送SLAVE NO ONE命令，转变为主服务器
+6.通过发布与订阅功能，将更新后的配置传播给所有其他Sentinel,其他Sentinel对配置进行更新
+7.向已下线主服务器的从服务器发送SLAVEOF,复制新的主服务器
+8.当所有从服务器都复制新的主服务器，领头Sentinel终止这次故障迁移操作
+Sentinel使用一下规则选择新的主服务器
+1.在失效主服务器属下的从服务器中，标记为主观下线，断线，最后一次回复PING超过5秒淘汰
+2.在失效主服务器属下的从服务器中，与失效主服务器连接断开时长超过down-after-milliseconds指定时长10倍的从服务器都会被淘汰
+3.剩下的从服务器中，选出复制偏移量(replication offset)最大的从服务器，若偏移量相同则使用运行id（runid）最小的
+
+
+------------------------ 集群暂时没看 比较复杂 -----------------------
