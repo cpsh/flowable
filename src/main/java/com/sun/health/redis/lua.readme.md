@@ -397,3 +397,22 @@ __gt >=
 table可执行
 5.__tostring元方法
 用于字符串
+
+N.Lua协同程序
+Lua协同程序(coroutine)与线程比较类似:拥有独立的堆栈、独立的局部变量、独立的指令指针，同时又与其他协同程序共享全局变量和其他大部分东西。
+协同程序是非常强大的功能，但用起来也很复杂
+线程和协同程序的区别
+线程与协同程序的主要区别在于，一个具有多个线程的程序可以同时运行几个线程，而协同程序却需要彼此协作的运行。在任一指定时刻只有一个协同程序在运行，并且这个正在运行的协同程序只有在明确的被要求挂起时才会被挂起。协同程序有点类似于同步的多线程，在等待同一个线程锁的几个线程有点类似协同
+基本语法
+1.coroutine.create() 创建coroutine，返回coroutine，参数是一个函数，当和resume配合使用的时候就唤醒函数调用
+2.coroutine.resume() 重启coroutine, 和create配合使用
+3.coroutine.yield()  挂起coroutine，将coroutine设置为挂起状态，配合resume唤醒
+4.coroutine.status() 查看coroutine状态 有3种状态 dead suspend running （suspend 挂起） 
+5.coroutine.warp()   创建coroutine,返回一个函数，一旦进入函数则进入coroutine，和create功能重复
+6.coroutine.running()返回正在运行的coroutine，返回运行coroutine的进程号
+
+coroutine.running就可以看出来coroutine在底层实现就是一个线程
+当create一个coroutine的时候就是在新线程中注册了一个事件
+当使用resume触发事件的时候，create的coroutine函数被执行，当遇到yield的时候就代表挂起当前线程，等待再次resume触发事件
+
+每一次resume会执行到协同程序的yield或return或结尾处，会获得一些返回值 第一个是协同程序操作是否成功 其后就是返回值 
