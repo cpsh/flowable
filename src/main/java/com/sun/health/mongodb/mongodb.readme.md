@@ -198,4 +198,114 @@ sort()方法
 可以通过参数指定排序的字段和顺序 1 表示升序 -1 表示降序
 db.collection_name.find().sort({key: 1/-1})
 
+MongoDB索引
+索引通常能够极大提高查询的效率，如果没有索引，MongoDB在读取数据时必须扫描集合中的每个文件并选取符合查询条件的记录
+这种扫描全集合的效率非常低，特别在处理大量数据的时候，查询可能需要花费很长时间。
+索引是特殊的数据结构，索引存储在一个易于遍历读取的数据集合中，索引是对数据库表中的一列或多列的值进行排序的一种结构。
+createIndex()方法
+注意在3.0.0版本之前创建索引方法为db.collection_name.ensureIndex()，之后版本使用db.collection_name.createIndex()方法，ensureIndex()方法仍然可以使用 只是createIndex()的别名
+语法结构
+db.collection_name.createIndex(keys, options)
+字段属性
+keys 创建的索引字段 1为升序 -1位降序 {key1:1/-1,key2:-1/-1,....}
+options 可选项 如下
+1.background                boolean     创建索引过程是否阻塞其他操作，true时指定以后台方式创建索引，默认是false
+2.unique                    boolean     建立的索引是否唯一 指定为true创建唯一索引 默认为false
+3.name                      string      索引的名称 如果为指定 通过连接索引的字段名和排序顺序生成一个索引名称
+4.dropDups                  boolean     在建立唯一索引时是否删除重复记录 指定true删除重复记录 默认false
+5.sparse                    boolean     对文档中不存在的字段数据不启用索引 需要注意 如果设置为true 则查询不到不包含此字段的文档 默认为false
+6.expireAfterSeconds        integer     指定一个以秒为单位的数值，TTL设定集合的生存时间
+7.v                         version     索引的版本号 默认的索引版本取决于mongodb创建索引时运行的版本
+8.weights                   document    索引权重值，数值在1~99999之间，表示该索引相对于其他索引的权重
+9.default_language          string      对于文本索引，决定了停用词及词干和词器的规则的列表，默认为英语
+10.language_override        string      对于文本索引，该参数指定了包含在文档中的字段名
 
+MongoDB聚合
+MongoDB中聚合(aggregate)主要用于处理数据（诸如统计平均值，求和等），并返回计算后的数据结果
+aggregate()方法
+语法结构
+db.collection_name.aggregate(AGGREGATE_OPERATION)
+例如 db.scores.aggregate([{$group: {_id:"$name", sum_score: {$sum: "$score"}}}])
+聚合表达式
+$sum        计算总和
+$avg        计算平均值
+$min        最小值
+$max        最大值
+$push       在结果中插入一个值
+$addToSet   类似于$push,但只添加不存在的值
+$first      获取第一个文档
+$last       获取最后一个文档
+管道的概念
+管道在Unix和Linux中一般用于将当前命令的输出结果作为下一个命令的输入
+MongoDB的聚合管道将MongoDB文档在一个管道处理完毕后将结果传递给下一个管道处理，管道操作时可以重复的
+表达式：处理输入文档并输出，表达式是无状态，只能用于计算当前聚合管道的文档，不能处理其他的文档
+聚合框架中常用的几个操作
+1.$project      修改输入文档的解构 可以用于重命名、增加或删除域 也可以用于创建计算结果以及嵌套文档
+2.$match        用于过滤数据，只输入符合条件的文档，$match使用MongoDB标准查询操作
+3.$limit        用来限制MongoDB聚合管道返回的文档数
+4.$skip         在聚合管道中跳过指定数量的文档 
+5.$unwind       将文档中的某一个数组类型字段拆分为多条，每条包含数组中的一个值
+6.$group        将集合中的文档分组，可用于统计结果
+7.$sort         将输入文档排序后输出
+8.$geoNear      输出接近某一个地理位置的有序文档
+管道操作符实例
+$project
+db.collection.aggregate([{$proejct: {_id: 1/0, id: "$_id"}}]) 非0表示展示 可以重名
+$match
+db.collection.aggregate([{$match: {key: value}}])
+
+MongoDB复制
+
+MongoDB复制是将数据同步在多个服务器的过程
+复制提供了数据冗余备份，并在多个服务器上存储数据副本，提高了数据的可用性，并可以保证数据的安全性
+复制还允许从硬件故障和服务中断中恢复数据
+什么是复制
+1.保障数据的安全性
+2.数据高可用性
+3.灾难恢复
+4.无需停机维护（如备份、重建索引、压缩）
+5.分布式读取数据
+MongoDB复制原理
+MongoDB复制至少需要两个节点，其中一个是主节点，负责处理客户端请求，其余的都是从节点，负责复制主节点上的数据。
+主节点记录在其上的所有操作oplog,从节点定期轮询主节点获取这些操作，然后对自己的数据副本执行这些操作，从而保证从节点的数据与主节点一致。
+副本集特征
+1.N个节点的集群
+2.任何节点可作为主节点
+3.自动故障转移
+4.自动恢复
+5.所有写入操作都在主节点上
+MongoDB副本集设置
+1.关闭正在运行的MongoDB服务器
+2.通过--replSet replication_name参数来启动MongoDB服务器
+3.使用mongo shell连接上服务器
+4.rs.initial()启动副本集 rs.conf()查看副本集的配置 rs.status()查看副本集运行情况
+5.给副本集添加成员 rs.add(HOST_NAME:PORT)
+6.只能通过主节点添加从服务器，使用db.isMaster()
+
+MongoDB分片
+MongoDB里面存在另一种集群，就是分片技术，可以满足MongoDB数据量大量增长的需求
+在MongoDB存储海量数据时，一台机器可能不足以存储数据，也能不足以提供可接受的读写吞吐量
+为什么使用分片
+1.复制所有的写入操作到主节点
+2.延迟敏感的数据会在主节点查询
+3.单个副本集限制在12个节点
+4.当请求量巨大时会出现内存不足
+5.本地磁盘不足
+6.垂直扩展昂贵
+Shard   用于存储实际的数据 实际生产环境中一个shard server角色可由几台机器组成一个replicationSet承担 放置主机单点故障
+Config Server   mongod实例 存储整个ClusterMetadata，其中包括chunk信息
+Query Routers   前端路由 客户端由此接入 
+配置分片
+Shard配置
+mongod --port 27018 --dbpath=/usr/local/mongodb/data/db_27018/ --logpath=/usr/local/mongodb/data/db_27018/shard_27018.log --logappend --fork
+Config Server配置
+mongod --port 27016 --dbpath=/usr/local/mongodb/data/db_27016/ --logpath=usr/local/mongodb/data/db_27016/config_27016.log --logappend --fork
+Router配置
+mongos --port 27017 --configdb conf/localhost:27016 --fork --logpath=/usr/local/mongodb/data/db/router_27017.log --chunkSize=500
+使用mongo命令行交互工具 配置Shard到Config Server
+需要使用admin db
+db.runCommand({addShard: "localhost:27018"})
+db.runCommand({addShard: "localhost:27019"})
+db.runCommand({enablesharding: "test"}) # 设置分片存储的数据库
+db.runCommand({shardcollection: "test.log", key: {id:1,time:1})
+ ------ 暂时分片没通过 ------------
