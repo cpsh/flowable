@@ -309,3 +309,236 @@ db.runCommand({addShard: "localhost:27019"})
 db.runCommand({enablesharding: "test"}) # 设置分片存储的数据库
 db.runCommand({shardcollection: "test.log", key: {id:1,time:1})
  ------ 暂时分片没通过 ------------
+ 
+MongoDB备份(mongodump)和恢复(mongorestore)
+MongoDB数据备份
+使用mongodump命令来备份MongoDB数据，该命令可以导出所有数据到指定目录中。mongodump命令可以通过参数指定导出的数据量级转存的服务器
+语法结构
+mongodump -h dbhost -d dbname -o dbdirectory
+参数说明
+-h MongoDB所在服务器地址 可以指定端口号 host:port
+-d 需要备份的数据库实例 
+-o 备份的数据存放位置，此目录需要提前建立，在备份完成之后，系统自动创建一个-d指定数据库同名的文件夹，存放备份数据
+-c 备份的collection
+MongoDB数据恢复
+使用mongorestore命令来恢复备份的数据
+mongorestore -h host -d dbname <path>
+可选参数说明
+-h --host host<:port>   恢复数据到的MongoDB服务器地址
+-d --db 需要恢复的数据库
+<path>  最后一个参数 设置备份数据所在的目录 不能和--dir同时指定
+--dir 指定备份的目录
+--drop 恢复的时候 先删除大年数据 然后恢复备份的数据
+
+MongoDB监控
+启动MongoDB服务后，必须了解MongoDB的运行情况，并查看MongoDB的性能。这样在大流量情况下可以很好的应对并保证MongoDB正常运行
+MongoDB提供了mongostat和mongotop两个命令来监控MongoDB的运行情况
+mongostat命令
+mongostat是mongodb自带的状态监测工具，在命令行下使用，会间隔固定时间获取mongodb的当前运行状态，并输出，如果发现数据库变慢或其他问题，第一反应使用mongostat查看MongoDB服务器运行情况
+mongotop命令
+mongotop也是MongoDB下的一个内置工具，mongotop提供了一个党阀，用来跟踪一个MongoDB的实例，查看花费大量时间用于读取和写入数据的任务、每一秒输出一次集合统计
+输出结果字段说明
+ns      包含数据库命名空间，后者结合了数据库名称和集合
+db      包含数据库的名称 名为.的数据库针对全局锁定 而非特定数据库
+total   mongod花费在此命名空间上的总时间
+read    mongod花费在此命名空间上读取数据的时间
+write   mongod花费在此命名空间上写数据的总时间
+
+MongoDB关系
+MongoDB的关系表示多个文档之间在逻辑上的相互联系
+文档间可通过嵌入和引用来建立联系
+MongoDB中的关系可以是
+1:1
+1:N
+N:1
+N:N
+嵌入式关系
+User
+{
+    name: "",
+    ...,
+    addresses: [
+        {
+            building: "",
+            ...
+        }
+    ]
+}
+数据量大的不易维护
+引用式关系
+User 
+{
+    name: "",
+    ...,
+    addresses_ids: [
+        ObjectId("..."),
+        ...,
+    ]
+}
+需要两次查询
+
+MongoDB数据库引用(DBRefs(一个类型))
+引用式关系有两种
+1.手动引用
+2.DBRefs
+使用DBRefs
+DBRefs的形式
+{
+    "$ref": "collection_name",
+    "$id": "引用的_id",
+    "$db": "database_name",
+}
+字段意义
+$ref    集合名称
+$id     引用的id
+$db     数据库名称
+User {
+    name: "",
+    ...,
+    address: [
+        {
+            "$ref": "",
+            "$id": ObjectId(""),
+            "$db": "",
+        }
+    ]
+}
+存储之后的格式
+User {
+    "name": "",
+    ...,
+    address: [
+        DBRefs(ref: "", id: ObjectId(""), db: "")
+    ]
+}
+
+MongoDB覆盖索引查询
+覆盖查询需要满足
+1.所有的查询字段是索引的一部分
+2.所有的查询返回字段在同一索引中
+由于所有出现在查询中的字段是索引的一部分，MongoDB无需在整个数据文档中检索匹配查询条件和返回使用相同索引的查询结果
+因为索引在RAM中，从索引中获取数据比通过扫描文档读取数据要快的多
+db.user.createIndex({"name": 1, "gender": 1},{})
+db.user.find({"gender":"男"}, {"name":1, _id:0})
+由于_id在查询时会默认返回，所以需要手动设置为0排除才能在没有_id的索引中使用覆盖索引查询
+
+MongoDB查询分析
+MongoDB查询分析可以确保索引是否有效，是查询语句性能分析的重要工具
+MongoDB查询分析常用函数有 explain() hint()
+使用explain()
+explain()操作提供了查询信息，使用索引及查询统计等，有利于对索引优化
+db.user.explain().help() 查看explain可用的场景
+一般db.user.find().explain()
+使用hint()
+强制使用指定的索引进行查询
+db.user.find().hint().explain()
+
+MongoDB原子操作
+MongoDB不支持事务，在实际使用中不能要求MongoDB保证数据完整性。
+但是MongoDB提供了许多原子操作，比如文档的保存，修改，删除等，都是原子操作
+原子操作数据模型
+db.collection_name.findAndModify({
+    query: <document>,
+    sort: <document>,
+    remove: <document>,
+    update: <document>,
+    new: <document>,
+    fields: <document>,
+    upsert: <document>,
+    bypassDocumentValidation: <document>,
+    writeConcern: <document>,
+    collation: <document>,
+})
+findAndModify可以保证修改+返回结果（修改前或者修改后都可以）这两个步骤的原子性。 
+修改并返回单个文档。 默认情况下，返回的文档不包括对更新所做的修改。
+原子操作常用命令
+$set: {field: value} 指定一个键并更新，若键不存在则创建
+$unset: {field: 1} 删除指定的键
+$inc: {field: value} 更新指定的number类型字段的值
+$push: {field: value} 把value追加到field里面，必须为数组类型，若不存在则创建一个新的数组
+$pushAll: {field: arr} 把一个数组整个追加
+$pull: {field: _value} 从数组field中删除一个等于_value的值
+$addToSet 不存在时追加一个值
+$pop: {field: 1} 删除数组中的第一个或最后一个元素
+$rename: {field_name: new_field_name} 重命名一个字段名
+$bit: {field: {and: 5}} 位运算 and or not
+
+MongoDB高级索引
+会为数组索引中所有的值创建索引
+可以为子文档创建索引
+
+MongoDB索引限制
+额外开销
+每个索引占据一定的存储空间，在进行插入，更新和删除操作时也需要对索引进行操作。
+内存(RAM)使用
+由于索引是存储在内存中，应该确保索引大小不超过内存的限制
+如果索引的大小大于内存的限制，MongoDB会删除一部分
+查询限制
+索引不能被一下的查询使用
+1.正则表达式以及非操作符，如$nin,$not等
+2.算术运算符，如$mod等
+3.$where子句
+索引键限制
+如果超过限制，不会创建索引
+最大范围
+集合中索引不能超过64个
+索引名的长度不能超过128个字符
+一个符合索引最多可以有31个字段
+
+MongoDB ObjectId
+ObjectId是一个12字节BSON类型数据 格式
+1.前4个字节表示时间戳
+2.接下来3个字节是机器标识码
+3.接下来2个字节是进程Id（PID）
+4.最后三个字节是随机数
+MongoDB中存储的文档必须有_id键，这个键的值可以是任何类型的，默认是ObjectId对象
+创建新的ObjectId
+newObjectId = ObjectId()
+获取时间戳
+newObjectId.getTimestamp()
+获取字符串
+newObjectId.str
+
+MongoDB Map Reduce
+Map-Reduce是一种计算模型，简单的说就是讲大批量的工作(数据)分解(Map)执行，然后再将结果合并成最终结果(Reduce)
+mapReduce命令 语法格式
+db.collection_name.mapReduce({
+    function() {emit(key, value)}
+    function(key, vakye) {
+        return reduceFunction()
+    },
+    out: collection,
+    query: document,
+    sort: document,
+    limit: number,
+})
+使用MapReduce要实现2个函数map和reduce函数，map函数可调用emit(key, value)遍历collection中所有的记录，将key和value传递给reduce函数
+参数说明
+1.map           映射函数（生成简直对序列，作为reduce函数参数）
+2.reduce        统计函数 reduce函数的任务就是将key-values变成key-value，也就是将values数组变为单一value
+3.out           统计结果存放集合 不指定则使用临时结合 在客户端断开后自动删除
+4.query         赛选条件
+5.sort          排序
+6.limit         上限
+类似于$group聚合 
+------ 暂时未测试 ------------
+
+MongoDB全文检索
+db.collection_name.createIndex({key: index_name})
+db.collection_name.find({$index_name: {$search: "content"}})
+db.collection_name.dropIndex()
+
+MongoDB正则表达式
+正则表达式使用单个字符串来描述、匹配一系列符合句法规则的字符串
+使用$regex操作符来设置匹配字符串的正则表达式
+使用PCRE作为正则表达式语言
+不同于全文检索，不需要做任何配置
+db.collection_name.find({key: /pattern/mode})
+或
+db.collection_name.find({key: {$regex: pattern[, options: mode]}})
+优化正则表达式
+如果你的文档中字段设置了索引，那么使用索引相比于正则表达式匹配查找所有的数据查询速度更快。
+如果正则表达式是前缀表达式，所有匹配的数据将以指定的前缀字符串为开始。例如： 如果正则表达式为 ^tut ，查询语句将查找以 tut 为开头的字符串。
+注意
+在正则表达式中使用变量一定要使用eval进行转换
+title: eval("/" + title + "/i") 相当于title: {$regex: title, $options: "i"}

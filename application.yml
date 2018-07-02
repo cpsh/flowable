@@ -27,6 +27,13 @@ spring:
     pool:
       max-wait: -1
     database: 0
+  data:
+    mongodb:
+#      host: 47.105.97.246
+#      port: 27017
+#      database: sjbuluo
+      uri: mongodb://47.105.97.246:27017/sjbuluo
+
 
 pf: DEV
 
