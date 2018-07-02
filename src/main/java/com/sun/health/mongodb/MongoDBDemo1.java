@@ -4,6 +4,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.gridfs.GridFSFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,11 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 /**
@@ -31,6 +35,9 @@ public class MongoDBDemo1 {
 
     @Autowired
     private MongoClient mongoClient;
+
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
 
     @Test
     @Profile("dev")
@@ -79,6 +86,16 @@ public class MongoDBDemo1 {
         List<User> users = mongoTemplate.findAll(User.class);
         for (User user : users) {
             System.out.println(user);
+        }
+    }
+
+    @Test
+    @Profile("dev")
+    public void test5() {
+        try {
+            GridFSFile gridFSFile = gridFsTemplate.store(new FileInputStream("F:\\BaiduYunDownload\\Gill - R.O.A.D PROJECT #1.rar"), "Gil.rar");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 

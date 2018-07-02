@@ -542,3 +542,34 @@ db.collection_name.find({key: {$regex: pattern[, options: mode]}})
 注意
 在正则表达式中使用变量一定要使用eval进行转换
 title: eval("/" + title + "/i") 相当于title: {$regex: title, $options: "i"}
+
+MongoDB GridFS
+GridFS用于存储和回复超过16M的文件
+GridFS也是文件存储的一种方式，但是存储在MongoDB集合中
+GridFS可以更好的存储大于16M的文件
+GridFS会将大文件对象分割成多个小的chunk（文件片段 分片），一般为256K/个，每个chunk将作为MongoDB的一个文档(document)被存储在chunks集合中
+GridFS用两个集合来存储一个文件，fs.files和fs.chunks
+每个文件的实际内容被存储在chunks（二进制数据中），和文件有关的元数据(filename,content-tyoe,还是其他自定义属性)被存储在files集合中
+分别是
+fs.chunks 文件实际数据
+fs.files 文件元数据
+mongofiles <options> <command> <filename or _id> 对file进行操作
+
+MongoDB固定集合(Capped Collections)
+MongoDB固定集合(Capped Collections)是性能出色且有固定大小的集合
+创建固定集合
+db.createCollection(collection_name, {capped: true, size: 10000, max: 10000}) 
+判断是否是固定集合
+db.collection_name.isCapped()
+如果需要将已存在的集合转换为固定集合
+db.runCommand({"convertToCapped":collection_name, size: 10000})
+固定集合的功能特点
+可以插入以及更新但是不能超出collection的大小，否则失败，不允许删除，但是可以调用drop()删除集合中的所有行，但是drop后需要显示的重建集合
+固定集合属性以及用法
+属性
+1.插入速度极快
+2.按照插入顺序的查询输出速度极快
+3.能够在插入最新数据时，淘汰最早的数据
+用法
+1.存储日志
+2.缓存少量文档
